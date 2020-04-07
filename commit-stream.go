@@ -10,7 +10,7 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"github.com/x1sec/commit-stream/pkg
+	"github.com/x1sec/commit-stream/pkg"
 	"os"
 )
 
