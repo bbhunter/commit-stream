@@ -1,3 +1,9 @@
+/*
+commit-stream
+Author: robert@x1sec.com
+See LICENSE
+*/
+
 package commitstream
 
 import (

@@ -1,10 +1,16 @@
+/*
+commit-stream
+Author: robert@x1sec.com
+See LICENSE
+*/
+
 package main
 
 import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"github.com/x1sec/commit-stream/pkg"
+	"github.com/x1sec/commit-stream/pkg
 	"os"
 )
 
@@ -16,7 +22,7 @@ func printAscii() {
 ██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║   ██║╚════╝╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║
 ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║   ██║      ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝   ╚═╝      ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ 
-https://github.com/x1sec/commit-stream        
+v0.1 - https://github.com/x1sec/commit-stream       
 
 `
 
