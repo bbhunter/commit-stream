@@ -17,7 +17,7 @@ Install the latest binaries from the releases or build yourself:
 ### Go get
 If your go environment is setup:
 ```
-go get -u https://github.com/x1sec/commit-stream
+go get -u github.com/x1sec/commit-stream
 ```
 ### Compiling
 ```
