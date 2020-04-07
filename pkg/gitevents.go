@@ -1,30 +1,30 @@
 package commitstream
- 
+
 import (
-	"golang.org/x/oauth2"
-	"github.com/google/go-github/github"
 	"context"
 	"fmt"
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 	"log"
-	"time"
 	"os"
-
+	"strings"
+	"time"
 )
 
 type Session struct {
 	client *github.Client
-	ctx context.Context
+	ctx    context.Context
 }
 
 type FeedResult struct {
 	CommitAuthors map[string]string
-	RepoName string
-	RepoURL string
-	SHA string
+	RepoName      string
+	RepoURL       string
+	SHA           string
 }
 
 type StreamOptions struct {
-	AuthToken string
+	AuthToken        string
 	SearchAllCommits bool
 }
 
@@ -35,8 +35,8 @@ func checkResponseError(err error, resp *github.Response) {
 
 	}
 	if _, ok := err.(*github.AbuseRateLimitError); ok {
-			fmt.Fprintf(os.Stderr, "Abuse detected!\n")
-			os.Exit(1)
+		fmt.Fprintf(os.Stderr, "Abuse detected!\n")
+		os.Exit(1)
 	}
 
 	if err != nil {
@@ -44,7 +44,7 @@ func checkResponseError(err error, resp *github.Response) {
 	}
 }
 
-func Run(options StreamOptions, results chan <- FeedResult) {
+func Run(options StreamOptions, results chan<- FeedResult) {
 
 	var s Session
 	s.ctx = context.Background()
@@ -57,12 +57,17 @@ func Run(options StreamOptions, results chan <- FeedResult) {
 	tc := oauth2.NewClient(s.ctx, ts)
 
 	s.client = github.NewClient(tc)
-	for { 
+	for {
 		opt := &github.ListOptions{PerPage: 300}
 		for {
-			
-			events, resp, err := s.client.Activity.ListEvents(lc, opt)
 
+			events, resp, err := s.client.Activity.ListEvents(lc, opt)
+			if err != nil {
+				if strings.Contains(string(err.Error()), "401 Bad credentials") {
+					fmt.Fprintf(os.Stderr, "Error with authentication token provided.")
+					os.Exit(1)
+				}
+			}
 			checkResponseError(err, resp)
 
 			for _, e := range events {
@@ -76,13 +81,11 @@ func Run(options StreamOptions, results chan <- FeedResult) {
 					result.RepoURL = "https://github.com/" + result.RepoName
 					//result.RepoURL = *e.GetRepo().URL
 
-
 					p, _ := e.ParsePayload()
 
 					q := p.(*github.PushEvent)
 
 					for _, r := range q.Commits {
-
 
 						//fmt.Printf("%v\n", github.Stringify(r))
 						email := *r.GetAuthor().Email
@@ -94,30 +97,24 @@ func Run(options StreamOptions, results chan <- FeedResult) {
 							break
 						}
 					}
-
 					//fmt.Println(result.CommitAuthors)
-					
-					
+
 					results <- result
 
-		
 				}
 			}
-
-			fmt.Fprintf(os.Stderr, "\r%d/%d remaining", resp.Rate.Remaining, resp.Rate.Limit)
-
+			//fmt.Fprintf(os.Stderr, "\r%d/%d remaining\n", resp.Rate.Remaining, resp.Rate.Limit)
 			if resp.NextPage == 0 {
 				break
 			}
 
 			opt.Page = resp.NextPage
 
-			time.Sleep(time.Second *1)
-			
+			time.Sleep(time.Second * 1)
+
 		}
 
 		time.Sleep(time.Second * 1)
 
 	}
 }
-
