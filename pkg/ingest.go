@@ -13,9 +13,10 @@ import (
 )
 
 type FilterOptions struct {
-	Email   string
-	Name    string
-	Enabled bool
+	Email               string
+	Name                string
+	Enabled             bool
+	IgnorePrivateEmails bool
 }
 
 type commit struct {
@@ -46,6 +47,12 @@ func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func([]string)
 }
 
 func isMatch(c commit, fo FilterOptions) bool {
+
+	if fo.IgnorePrivateEmails == true {
+		if strings.Contains(c.email, "@users.noreply.github.com") {
+			return false
+		}
+	}
 
 	if fo.Enabled == false {
 		return true

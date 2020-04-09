@@ -39,10 +39,11 @@ func init() {
 		h += "  commit-stream [OPTIONS]\n\n"
 
 		h += "Options:\n"
-		h += "  -e, --email       Match email addresses field (specify multiple with comma). Omit to match all.\n"
-		h += "  -n, --name        Match author name field (specify multiple with comma). Omit to match all.\n"
-		h += "  -t, --token       Github token (if not specified, will use environment variable 'CSTREAM_TOKEN')\n"
-		h += "  -a  --all-commits Search through previous commit history (default: false)\n"
+		h += "  -e, --email        Match email addresses field (specify multiple with comma). Omit to match all.\n"
+		h += "  -n, --name         Match author name field (specify multiple with comma). Omit to match all.\n"
+		h += "  -t, --token        Github token (if not specified, will use environment variable 'CSTREAM_TOKEN')\n"
+		h += "  -a  --all-commits  Search through previous commit history (default: false)\n"
+		h += "  -i  --ignore-priv  Ignore noreply.github.com private email addresses (default: false)\n"
 		h += "\n\n"
 		fmt.Fprintf(os.Stderr, h)
 	}
@@ -51,10 +52,9 @@ func init() {
 func main() {
 
 	var (
-		authToken        string
-		rate             int
-		filter           commitstream.FilterOptions
-		searchAllCommits bool
+		authToken            string
+		filter               commitstream.FilterOptions
+		searchAllCommits     bool
 	)
 
 	flag.StringVar(&filter.Email, "email", "", "")
@@ -65,8 +65,8 @@ func main() {
 
 	flag.StringVar(&authToken, "token", "", "")
 	flag.StringVar(&authToken, "t", "", "")
-	flag.IntVar(&rate, "r", 0, "")
-	flag.IntVar(&rate, "rate", 0, "")
+
+	flag.BoolVar(&filter.IgnorePrivateEmails, "i", false, "")
 
 	flag.BoolVar(&searchAllCommits, "a", false, "")
 	flag.BoolVar(&searchAllCommits, "all-commits", false, "")
@@ -79,6 +79,7 @@ func main() {
 		filter.Enabled = true
 	}
 
+
 	if authToken == "" {
 		authToken = os.Getenv("CSTREAM_TOKEN")
 		if authToken == "" {
@@ -88,7 +89,7 @@ func main() {
 
 	}
 
-	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits}
+	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits }
 	commitstream.DoIngest(streamOpt, filter, handleResult)
 }
 

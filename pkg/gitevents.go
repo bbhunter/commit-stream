@@ -30,13 +30,14 @@ type FeedResult struct {
 }
 
 type StreamOptions struct {
-	AuthToken        string
-	SearchAllCommits bool
+	AuthToken            string
+	SearchAllCommits     bool
+	IgnorePrivateEmails  bool
 }
 
 func checkResponseError(err error, resp *github.Response) {
 	if _, ok := err.(*github.RateLimitError); ok {
-		log.Println("Hit rate limit. Reset: %s", resp.Rate.Reset)
+		log.Println("Hit rate limit. Reset: %s\n", resp.Rate.Reset)
 		time.Sleep(time.Until(resp.Rate.Reset.Time))
 
 	}
@@ -70,7 +71,7 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 			events, resp, err := s.client.Activity.ListEvents(lc, opt)
 			if err != nil {
 				if strings.Contains(string(err.Error()), "401 Bad credentials") {
-					fmt.Fprintf(os.Stderr, "Error with authentication token provided.")
+					fmt.Fprintf(os.Stderr, "Error with authentication token provided.\n")
 					os.Exit(1)
 				}
 			}
