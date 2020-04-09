@@ -62,7 +62,7 @@ To filter by author name:
 
 Multiple keywords can be specified with a `,` character. e.g.
 ```
-./commit-stream --email '@telsa.com,@ford.com`
+./commit-stream --email '@telsa.com,@ford.com'
 ```
 
 It is possible to search upto 20 previous commits for the filter keywords by specifying `--all-commits`. This may increase the likelihood of a positive matches.
