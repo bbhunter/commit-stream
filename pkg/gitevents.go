@@ -1,6 +1,8 @@
 /*
 commit-stream
-Author: robert@x1sec.com
+Author: https://twitter.com/x1sec 
+		robert@x1sec.com 
+
 See LICENSE
 */
 
@@ -15,6 +17,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"net"
 )
 
 type Session struct {
@@ -35,20 +38,34 @@ type StreamOptions struct {
 	IgnorePrivateEmails  bool
 }
 
-func checkResponseError(err error, resp *github.Response) {
+func checkResponseError(err error, resp *github.Response) bool {
 	if _, ok := err.(*github.RateLimitError); ok {
 		log.Println("Hit rate limit. Reset: %s\n", resp.Rate.Reset)
 		time.Sleep(time.Until(resp.Rate.Reset.Time))
-
+		return true
 	}
 	if _, ok := err.(*github.AbuseRateLimitError); ok {
 		fmt.Fprintf(os.Stderr, "Abuse detected!\n")
 		os.Exit(1)
 	}
 
-	if err != nil {
-		fmt.Println(err)
+	if err, ok := err.(net.Error); ok && err.Timeout() {
+		fmt.Fprintf(os.Stderr, "Timeout occured, sleeping for 5 seconds...\n")
+		time.Sleep(5 * time.Second)
+		return true
 	}
+
+	if err != nil {
+		if strings.Contains(string(err.Error()), "401 Bad credentials") {
+			fmt.Fprintf(os.Stderr, "Error with authentication token provided.\n")
+			os.Exit(1)
+		}  else {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}	
+	}
+
+	return false
 }
 
 func Run(options StreamOptions, results chan<- FeedResult) {
@@ -69,13 +86,10 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 		for {
 
 			events, resp, err := s.client.Activity.ListEvents(lc, opt)
-			if err != nil {
-				if strings.Contains(string(err.Error()), "401 Bad credentials") {
-					fmt.Fprintf(os.Stderr, "Error with authentication token provided.\n")
-					os.Exit(1)
-				}
+
+			if checkResponseError(err, resp) {
+				continue
 			}
-			checkResponseError(err, resp)
 
 			for _, e := range events {
 

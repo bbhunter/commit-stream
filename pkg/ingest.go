@@ -1,6 +1,8 @@
 /*
 commit-stream
-Author: robert@x1sec.com
+Author: https://twitter.com/x1sec 
+		robert@x1sec.com 
+
 See LICENSE
 */
 

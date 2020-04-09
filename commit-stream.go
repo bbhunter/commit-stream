@@ -1,6 +1,8 @@
 /*
 commit-stream
-Author: robert@x1sec.com
+Author: https://twitter.com/x1sec 
+		robert@x1sec.com 
+
 See LICENSE
 */
 
@@ -86,7 +88,6 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Please specify Github authentication token with '-t' or by setting the environment variable CSTREAM_TOKEN\n")
 			os.Exit(1)
 		}
-
 	}
 
 	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits }
