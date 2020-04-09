@@ -12,17 +12,15 @@ OSINT / Recon uses for  Redteamers / Bug bounty hunters:
 
 ## Installation
 ### Binaries
-Install the latest binaries from the releases or build yourself:
+Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/x1sec/commit-stream/releases/)
 
 ### Go get
-If your go environment is setup:
+If you would prefer to build yourself (and Go is setup [correctly](https://golang.org/doc/install)):
 ```
 go get -u github.com/x1sec/commit-stream
 ```
-### Compiling
+### Building from source
 ```
-git clone https://github.com/x1sec/commit-stream
-cd commit-stream
 go get && go build
 ```
 
