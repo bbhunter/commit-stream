@@ -31,10 +31,11 @@ Usage:
   commit-stream [OPTIONS]
 
 Options:
-  -e, --email       Match email addresses field (specify multiple with comma). Omit to match all.
-  -n, --name        Match author name field (specify multiple with comma). Omit to match all.
-  -t, --token       Github token (if not specified, will use environment variable 'CSTREAM_TOKEN')
-  -a  --all-commits Search through previous commit history (default: false)
+  -e, --email        Match email addresses field (specify multiple with comma). Omit to match all.
+  -n, --name         Match author name field (specify multiple with comma). Omit to match all.
+  -t, --token        Github token (if not specified, will use environment variable 'CSTREAM_TOKEN')
+  -a  --all-commits  Search through previous commit history (default: false)
+  -i  --ignore-priv  Ignore noreply.github.com private email addresses (default: false)  
 ```
 
 `commit-stream` requires a Github personal access token to be used. You can generate a token navigating in Github [Settings / Developer Settings /  Personal Access Tokens] then selecting 'Generate new token'. Nothing here needs to be selected, just enter the name of the token and click generate.
