@@ -68,6 +68,7 @@ func main() {
 	flag.StringVar(&authToken, "token", "", "")
 	flag.StringVar(&authToken, "t", "", "")
 
+	flag.BoolVar(&filter.IgnorePrivateEmails, "ignore-priv", false, "")
 	flag.BoolVar(&filter.IgnorePrivateEmails, "i", false, "")
 
 	flag.BoolVar(&searchAllCommits, "a", false, "")
