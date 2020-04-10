@@ -42,7 +42,7 @@ Options:
 
 Once the token has been created, the recommended method is to set it via an environment variable `CSTREAM_TOKEN`:
 ```
-export CSTREAM_TOKEN xxxxxxxxxx
+export CSTREAM_TOKEN=xxxxxxxxxx
 ```
 Alternatively, the `--token` switch maybe used when invoking the program, e.g:
 ```
