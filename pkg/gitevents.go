@@ -61,6 +61,7 @@ func checkResponseError(err error, resp *github.Response) bool {
 			fmt.Fprintf(os.Stderr, "401 - Error with authentication token provided.\n")
 
 		case 502:
+			// Handle 502 sleeping for file seconds before retrying 
 			fmt.Fprintf(os.Stderr, "502 - Bad Gateway, sleeping for 5 seconds... \n")
 			time.Sleep(5 * time.Second)
 			return true
