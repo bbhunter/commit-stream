@@ -91,7 +91,7 @@ func main() {
 		}
 	}
 
-	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits }
+	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits, Rate : 1 }
 	commitstream.DoIngest(streamOpt, filter, handleResult)
 }
 

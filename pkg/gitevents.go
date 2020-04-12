@@ -1,7 +1,7 @@
 /*
 commit-stream
-Author: https://twitter.com/x1sec 
-		robert@x1sec.com 
+Author: https://twitter.com/x1sec
+		robert@x1sec.com
 
 See LICENSE
 */
@@ -14,10 +14,9 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"log"
-	"os"
-	"strings"
-	"time"
 	"net"
+	"os"
+	"time"
 )
 
 type Session struct {
@@ -33,9 +32,10 @@ type FeedResult struct {
 }
 
 type StreamOptions struct {
-	AuthToken            string
-	SearchAllCommits     bool
-	IgnorePrivateEmails  bool
+	AuthToken           string
+	SearchAllCommits    bool
+	IgnorePrivateEmails bool
+	Rate                int
 }
 
 func checkResponseError(err error, resp *github.Response) bool {
@@ -55,14 +55,20 @@ func checkResponseError(err error, resp *github.Response) bool {
 		return true
 	}
 
-	if err != nil {
-		if strings.Contains(string(err.Error()), "401 Bad credentials") {
-			fmt.Fprintf(os.Stderr, "Error with authentication token provided.\n")
-			os.Exit(1)
-		}  else {
+	if err, r := err.(*github.ErrorResponse); r {
+		switch statusCode := err.Response.StatusCode; statusCode {
+		case 401:
+			fmt.Fprintf(os.Stderr, "401 - Error with authentication token provided.\n")
+
+		case 502:
+			fmt.Fprintf(os.Stderr, "502 - Bad Gateway, sleeping for 5 seconds... \n")
+			time.Sleep(5 * time.Second)
+			return true
+		default:
 			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
-		}	
+		}
+
+		os.Exit(1)
 	}
 
 	return false
@@ -135,7 +141,7 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 
 		}
 
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Second * time.Duration(options.Rate))
 
 	}
 }
