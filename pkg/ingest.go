@@ -1,7 +1,6 @@
 /*
 commit-stream
-Author: https://twitter.com/x1sec 
-		robert@x1sec.com 
+Author: https://twitter.com/haxrob
 
 See LICENSE
 */
@@ -10,7 +9,6 @@ package commitstream
 
 import (
 	"strings"
-	//"time"
 	"sync"
 )
 

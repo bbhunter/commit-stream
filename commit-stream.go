@@ -1,7 +1,6 @@
 /*
 commit-stream
-Author: https://twitter.com/x1sec 
-		robert@x1sec.com 
+Author: https://twitter.com/robhax
 
 See LICENSE
 */
@@ -12,8 +11,9 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"github.com/x1sec/commit-stream/pkg"
 	"os"
+
+	commitstream "github.com/robhax/commit-stream/pkg"
 )
 
 func printAscii() {
@@ -54,9 +54,9 @@ func init() {
 func main() {
 
 	var (
-		authToken            string
-		filter               commitstream.FilterOptions
-		searchAllCommits     bool
+		authToken        string
+		filter           commitstream.FilterOptions
+		searchAllCommits bool
 	)
 
 	flag.StringVar(&filter.Email, "email", "", "")
@@ -82,7 +82,6 @@ func main() {
 		filter.Enabled = true
 	}
 
-
 	if authToken == "" {
 		authToken = os.Getenv("CSTREAM_TOKEN")
 		if authToken == "" {
@@ -91,7 +90,7 @@ func main() {
 		}
 	}
 
-	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits, Rate : 1 }
+	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits}
 	commitstream.DoIngest(streamOpt, filter, handleResult)
 }
 

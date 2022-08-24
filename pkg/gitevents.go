@@ -1,7 +1,6 @@
 /*
 commit-stream
-Author: https://twitter.com/x1sec
-		robert@x1sec.com
+Author: https://twitter.com/haxrob
 
 See LICENSE
 */
@@ -11,12 +10,13 @@ package commitstream
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/github"
-	"golang.org/x/oauth2"
 	"log"
 	"net"
 	"os"
 	"time"
+
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 type Session struct {
@@ -59,17 +59,18 @@ func checkResponseError(err error, resp *github.Response) bool {
 		switch statusCode := err.Response.StatusCode; statusCode {
 		case 401:
 			fmt.Fprintf(os.Stderr, "401 - Error with authentication token provided.\n")
-
+			os.Exit(1)
 		case 502:
-			// Handle 502 sleeping for file seconds before retrying 
+			// Handle 502 sleeping for file seconds before retrying
 			fmt.Fprintf(os.Stderr, "502 - Bad Gateway, sleeping for 5 seconds... \n")
 			time.Sleep(5 * time.Second)
 			return true
 		default:
 			fmt.Fprintf(os.Stderr, err.Error())
+			return true
 		}
+		return false
 
-		os.Exit(1)
 	}
 
 	return false
@@ -142,7 +143,7 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 
 		}
 
-		time.Sleep(time.Second * time.Duration(options.Rate))
+		time.Sleep(time.Second * time.Duration(1))
 
 	}
 }
