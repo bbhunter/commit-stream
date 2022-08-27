@@ -19,22 +19,26 @@ type FilterOptions struct {
 	IgnorePrivateEmails bool
 }
 
-type commit struct {
-	name  string
-	email string
-	repo  string
+type Commit struct {
+	Name  string
+	Email string
+	Repo  string
+}
+
+type Callback interface {
+	Run(c Commit)
 }
 
 var mu sync.Mutex
 
-func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func([]string)) {
+func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func(Commit)) {
 
 	var results = make(chan FeedResult)
 
 	go func() {
 		for result := range results {
 			for e, n := range result.CommitAuthors {
-				c := commit{n, e, result.RepoURL}
+				c := Commit{n, e, result.RepoURL}
 				if isMatch(c, fo) {
 					outputMatch(c, callback)
 				}
@@ -46,10 +50,10 @@ func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func([]string)
 
 }
 
-func isMatch(c commit, fo FilterOptions) bool {
+func isMatch(c Commit, fo FilterOptions) bool {
 
 	if fo.IgnorePrivateEmails == true {
-		if strings.Contains(c.email, "@users.noreply.github.com") {
+		if strings.Contains(c.Email, "@users.noreply.github.com") {
 			return false
 		}
 	}
@@ -63,7 +67,7 @@ func isMatch(c commit, fo FilterOptions) bool {
 	if fo.Email != "" {
 		//fmt.Printf("checking %s against %s\n", email, fo.email)
 		for _, e := range strings.Split(fo.Email, ",") {
-			if strings.Contains(c.email, strings.TrimSpace(e)) {
+			if strings.Contains(c.Email, strings.TrimSpace(e)) {
 				result = true
 			}
 		}
@@ -71,7 +75,7 @@ func isMatch(c commit, fo FilterOptions) bool {
 
 	if fo.Name != "" {
 		for _, n := range strings.Split(fo.Name, ",") {
-			if strings.Contains(c.name, strings.TrimSpace(n)) {
+			if strings.Contains(c.Name, strings.TrimSpace(n)) {
 				result = true
 			}
 		}
@@ -80,11 +84,11 @@ func isMatch(c commit, fo FilterOptions) bool {
 	return result
 }
 
-func outputMatch(c commit, callback func([]string)) {
-	s := []string{c.name, c.email, c.repo}
+func outputMatch(c Commit, callback func(Commit)) {
+	//s := []string{c.name, c.email, c.repo}
 	//tm := time.Now().UTC().Format("2006-01-02T15:04:05")
 
 	mu.Lock()
-	callback(s)
+	callback(c)
 	mu.Unlock()
 }

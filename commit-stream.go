@@ -24,7 +24,7 @@ func printAscii() {
 ██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║   ██║╚════╝╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║
 ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║   ██║      ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝   ╚═╝      ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ 
-v0.1 - https://github.com/x1sec/commit-stream       
+https://github.com/x1sec/commit-stream       
 
 `
 
@@ -94,8 +94,9 @@ func main() {
 	commitstream.DoIngest(streamOpt, filter, handleResult)
 }
 
-func handleResult(s []string) {
+func handleResult(c commitstream.Commit) {
+	cOut := []string{c.Name, c.Email, c.Repo}
 	w := csv.NewWriter(os.Stdout)
-	w.Write(s)
+	w.Write(cOut)
 	w.Flush()
 }
