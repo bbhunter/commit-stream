@@ -8,16 +8,18 @@ OSINT / Recon uses for  Redteamers / Bug bounty hunters:
 * Identify repositories belonging to an individual (filter by author name)
 * Chain with other tools such as trufflehog to extract secrets in uncovered repositories.
 
+Defenders may find the tool useful to discover repositories that employees are committing intellectual property to.
+
 [![asciicast](https://asciinema.org/a/317469.svg)](https://asciinema.org/a/317469)
 
 ## Installation
 ### Binaries
-Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/x1sec/commit-stream/releases/)
+Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/robhax/commit-stream/releases/)
 
 ### Go get
 If you would prefer to build yourself (and Go is setup [correctly](https://golang.org/doc/install)):
 ```
-go get -u github.com/x1sec/commit-stream
+go get -u github.com/robhax/commit-stream
 ```
 ### Building from source
 ```
@@ -36,6 +38,7 @@ Options:
   -t, --token        Github token (if not specified, will use environment variable 'CSTREAM_TOKEN')
   -a  --all-commits  Search through previous commit history (default: false)
   -i  --ignore-priv  Ignore noreply.github.com private email addresses (default: false)  
+  -m  --messages     Fetch commit messages (default: false)
 ```
 
 `commit-stream` requires a Github personal access token to be used. You can generate a token navigating in Github [Settings / Developer Settings /  Personal Access Tokens] then selecting 'Generate new token'. Nothing here needs to be selected, just enter the name of the token and click generate.

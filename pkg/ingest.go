@@ -17,12 +17,14 @@ type FilterOptions struct {
 	Name                string
 	Enabled             bool
 	IgnorePrivateEmails bool
+	includeMessages     bool
 }
 
 type Commit struct {
-	Name  string
-	Email string
-	Repo  string
+	Name    string
+	Email   string
+	Repo    string
+	Message string
 }
 
 type Callback interface {
@@ -38,7 +40,11 @@ func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func(Commit)) 
 	go func() {
 		for result := range results {
 			for e, n := range result.CommitAuthors {
-				c := Commit{n, e, result.RepoURL}
+				c := Commit{Name: n, Email: e, Repo: result.RepoName}
+				if streamOpt.IncludeMessages != false {
+					c.Message = result.Message
+				}
+
 				if isMatch(c, fo) {
 					outputMatch(c, callback)
 				}

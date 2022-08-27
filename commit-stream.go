@@ -27,7 +27,6 @@ func printAscii() {
 https://github.com/x1sec/commit-stream       
 
 `
-
 	fmt.Fprintf(os.Stderr, h)
 }
 
@@ -35,7 +34,7 @@ func init() {
 	flag.Usage = func() {
 		printAscii()
 
-		h := "Stream Github commit authors in realtime\n\n"
+		h := "Stream Github commit logs in real-time\n\n"
 
 		h += "Usage:\n"
 		h += "  commit-stream [OPTIONS]\n\n"
@@ -46,6 +45,7 @@ func init() {
 		h += "  -t, --token        Github token (if not specified, will use environment variable 'CSTREAM_TOKEN')\n"
 		h += "  -a  --all-commits  Search through previous commit history (default: false)\n"
 		h += "  -i  --ignore-priv  Ignore noreply.github.com private email addresses (default: false)\n"
+		h += "  -m  --messages     Fetch commit messages (default: false)\n"
 		h += "\n\n"
 		fmt.Fprintf(os.Stderr, h)
 	}
@@ -57,6 +57,7 @@ func main() {
 		authToken        string
 		filter           commitstream.FilterOptions
 		searchAllCommits bool
+		includeMessages  bool
 	)
 
 	flag.StringVar(&filter.Email, "email", "", "")
@@ -73,6 +74,8 @@ func main() {
 
 	flag.BoolVar(&searchAllCommits, "a", false, "")
 	flag.BoolVar(&searchAllCommits, "all-commits", false, "")
+	flag.BoolVar(&includeMessages, "m", false, "")
+	flag.BoolVar(&includeMessages, "messages", false, "")
 
 	flag.Parse()
 
@@ -90,12 +93,12 @@ func main() {
 		}
 	}
 
-	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits}
+	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits, IncludeMessages: includeMessages}
 	commitstream.DoIngest(streamOpt, filter, handleResult)
 }
 
 func handleResult(c commitstream.Commit) {
-	cOut := []string{c.Name, c.Email, c.Repo}
+	cOut := []string{c.Name, c.Email, "https://github.com/" + c.Repo, c.Message}
 	w := csv.NewWriter(os.Stdout)
 	w.Write(cOut)
 	w.Flush()

@@ -29,6 +29,7 @@ type FeedResult struct {
 	RepoName      string
 	RepoURL       string
 	SHA           string
+	Message       string
 }
 
 type StreamOptions struct {
@@ -36,6 +37,7 @@ type StreamOptions struct {
 	SearchAllCommits    bool
 	IgnorePrivateEmails bool
 	Rate                int
+	IncludeMessages     bool
 }
 
 func checkResponseError(err error, resp *github.Response) bool {
@@ -107,8 +109,6 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 					result.CommitAuthors = make(map[string]string)
 
 					result.RepoName = *e.GetRepo().Name
-					result.RepoURL = "https://github.com/" + result.RepoName
-					//result.RepoURL = *e.GetRepo().URL
 
 					p, _ := e.ParsePayload()
 
@@ -119,9 +119,11 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 						//fmt.Printf("%v\n", github.Stringify(r))
 						email := *r.GetAuthor().Email
 						name := *r.GetAuthor().Name
+						message := *r.Message
 
 						result.CommitAuthors[email] = name
 						result.SHA = *r.SHA
+						result.Message = message
 						if options.SearchAllCommits == false {
 							break
 						}
