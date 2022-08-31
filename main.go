@@ -54,10 +54,8 @@ func init() {
 func main() {
 
 	var (
-		authToken        string
-		filter           commitstream.FilterOptions
-		searchAllCommits bool
-		includeMessages  bool
+		authToken string
+		filter    commitstream.Filter
 	)
 
 	flag.StringVar(&filter.Email, "email", "", "")
@@ -72,10 +70,10 @@ func main() {
 	flag.BoolVar(&filter.IgnorePrivateEmails, "ignore-priv", false, "")
 	flag.BoolVar(&filter.IgnorePrivateEmails, "i", false, "")
 
-	flag.BoolVar(&searchAllCommits, "a", false, "")
-	flag.BoolVar(&searchAllCommits, "all-commits", false, "")
-	flag.BoolVar(&includeMessages, "m", false, "")
-	flag.BoolVar(&includeMessages, "messages", false, "")
+	flag.BoolVar(&filter.SearchAllCommits, "a", false, "")
+	flag.BoolVar(&filter.SearchAllCommits, "all-commits", false, "")
+	flag.BoolVar(&filter.IncludeMessages, "m", false, "")
+	flag.BoolVar(&filter.IncludeMessages, "messages", false, "")
 
 	flag.Parse()
 
@@ -93,8 +91,16 @@ func main() {
 		}
 	}
 
-	streamOpt := commitstream.StreamOptions{AuthToken: authToken, SearchAllCommits: searchAllCommits, IncludeMessages: includeMessages}
-	commitstream.DoIngest(streamOpt, filter, handleResult)
+	githubOptions := commitstream.GithubOptions{
+		AuthToken: authToken,
+	}
+
+	cs := commitstream.CommitStream{
+		GithubOptions: &githubOptions,
+		Filter:        &filter,
+	}
+
+	cs.Start(handleResult)
 }
 
 func handleResult(c commitstream.Commit) {

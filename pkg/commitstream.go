@@ -1,10 +1,3 @@
-/*
-commit-stream
-Author: https://twitter.com/haxrob
-
-See LICENSE
-*/
-
 package commitstream
 
 import (
@@ -12,12 +5,24 @@ import (
 	"sync"
 )
 
-type FilterOptions struct {
+type CommitStream struct {
+	mu            sync.Mutex
+	GithubOptions *GithubOptions
+	Filter        *Filter
+}
+
+type GithubOptions struct {
+	AuthToken string
+	Rate      int
+}
+
+type Filter struct {
 	Email               string
 	Name                string
 	Enabled             bool
 	IgnorePrivateEmails bool
-	includeMessages     bool
+	IncludeMessages     bool
+	SearchAllCommits    bool
 }
 
 type Commit struct {
@@ -27,13 +32,10 @@ type Commit struct {
 	Message string
 }
 
-type Callback interface {
-	Run(c Commit)
-}
-
-var mu sync.Mutex
-
-func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func(Commit)) {
+func (cs *CommitStream) Start(callback func(Commit)) {
+	gh := GithubHandler{
+		Cstream: cs,
+	}
 
 	var results = make(chan FeedResult)
 
@@ -41,46 +43,46 @@ func DoIngest(streamOpt StreamOptions, fo FilterOptions, callback func(Commit)) 
 		for result := range results {
 			for e, n := range result.CommitAuthors {
 				c := Commit{Name: n, Email: e, Repo: result.RepoName}
-				if streamOpt.IncludeMessages != false {
+				if cs.Filter.IncludeMessages != false {
 					c.Message = result.Message
 				}
 
-				if isMatch(c, fo) {
-					outputMatch(c, callback)
+				if cs.isMatch(c) {
+					cs.outputMatch(c, callback)
 				}
 			}
 		}
 	}()
 
-	Run(streamOpt, results)
+	gh.Run(results)
 
 }
 
-func isMatch(c Commit, fo FilterOptions) bool {
+func (cs *CommitStream) isMatch(c Commit) bool {
 
-	if fo.IgnorePrivateEmails == true {
+	if cs.Filter.IgnorePrivateEmails == true {
 		if strings.Contains(c.Email, "@users.noreply.github.com") {
 			return false
 		}
 	}
 
-	if fo.Enabled == false {
+	if cs.Filter.Enabled == false {
 		return true
 	}
 
 	result := false
 
-	if fo.Email != "" {
+	if cs.Filter.Email != "" {
 		//fmt.Printf("checking %s against %s\n", email, fo.email)
-		for _, e := range strings.Split(fo.Email, ",") {
+		for _, e := range strings.Split(cs.Filter.Email, ",") {
 			if strings.Contains(c.Email, strings.TrimSpace(e)) {
 				result = true
 			}
 		}
 	}
 
-	if fo.Name != "" {
-		for _, n := range strings.Split(fo.Name, ",") {
+	if cs.Filter.Name != "" {
+		for _, n := range strings.Split(cs.Filter.Name, ",") {
 			if strings.Contains(c.Name, strings.TrimSpace(n)) {
 				result = true
 			}
@@ -90,11 +92,11 @@ func isMatch(c Commit, fo FilterOptions) bool {
 	return result
 }
 
-func outputMatch(c Commit, callback func(Commit)) {
+func (cs *CommitStream) outputMatch(c Commit, callback func(Commit)) {
 	//s := []string{c.name, c.email, c.repo}
 	//tm := time.Now().UTC().Format("2006-01-02T15:04:05")
 
-	mu.Lock()
+	cs.mu.Lock()
 	callback(c)
-	mu.Unlock()
+	cs.mu.Unlock()
 }

@@ -1,10 +1,3 @@
-/*
-commit-stream
-Author: https://twitter.com/haxrob
-
-See LICENSE
-*/
-
 package commitstream
 
 import (
@@ -19,6 +12,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type GithubHandler struct {
+	session Session
+	Cstream *CommitStream
+}
+
 type Session struct {
 	client *github.Client
 	ctx    context.Context
@@ -32,15 +30,7 @@ type FeedResult struct {
 	Message       string
 }
 
-type StreamOptions struct {
-	AuthToken           string
-	SearchAllCommits    bool
-	IgnorePrivateEmails bool
-	Rate                int
-	IncludeMessages     bool
-}
-
-func checkResponseError(err error, resp *github.Response) bool {
+func (gh *GithubHandler) checkResponseError(err error, resp *github.Response) bool {
 	if _, ok := err.(*github.RateLimitError); ok {
 		log.Println("Hit rate limit. Reset: %s\n", resp.Rate.Reset)
 		time.Sleep(time.Until(resp.Rate.Reset.Time))
@@ -78,26 +68,26 @@ func checkResponseError(err error, resp *github.Response) bool {
 	return false
 }
 
-func Run(options StreamOptions, results chan<- FeedResult) {
+func (gh *GithubHandler) Run(results chan<- FeedResult) {
+	options := gh.Cstream.GithubOptions
 
-	var s Session
-	s.ctx = context.Background()
-	lc, cancel := context.WithCancel(s.ctx)
+	gh.session.ctx = context.Background()
+	lc, cancel := context.WithCancel(gh.session.ctx)
 
 	defer cancel()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: options.AuthToken},
 	)
-	tc := oauth2.NewClient(s.ctx, ts)
+	tc := oauth2.NewClient(gh.session.ctx, ts)
 
-	s.client = github.NewClient(tc)
+	gh.session.client = github.NewClient(tc)
 	for {
 		opt := &github.ListOptions{PerPage: 300}
 		for {
 
-			events, resp, err := s.client.Activity.ListEvents(lc, opt)
+			events, resp, err := gh.session.client.Activity.ListEvents(lc, opt)
 
-			if checkResponseError(err, resp) {
+			if gh.checkResponseError(err, resp) {
 				continue
 			}
 
@@ -124,7 +114,7 @@ func Run(options StreamOptions, results chan<- FeedResult) {
 						result.CommitAuthors[email] = name
 						result.SHA = *r.SHA
 						result.Message = message
-						if options.SearchAllCommits == false {
+						if gh.Cstream.Filter.SearchAllCommits == false {
 							break
 						}
 					}
