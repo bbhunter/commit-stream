@@ -1,0 +1,12 @@
+github:
+  token: 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
+
+destination: elastic
+
+elasticsearch:
+  uri: http://127.0.0.1:4080
+  username: admin
+  password: admin
+  
+  no-duplicates: true
+

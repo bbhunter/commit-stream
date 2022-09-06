@@ -1,14 +1,29 @@
 package commitstream
 
 import (
+	"log"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
+type Handler interface {
+	Callback([]Commit)
+}
+
+type ProcessingStats struct {
+	IncomingRate  uint32
+	ProcessedRate uint32
+	FilteredRate  uint32
+	Total         uint32
+}
 type CommitStream struct {
 	mu            sync.Mutex
 	GithubOptions *GithubOptions
 	Filter        *Filter
+	Stats         ProcessingStats
+	Debug         bool
 }
 
 type GithubOptions struct {
@@ -30,35 +45,56 @@ type Commit struct {
 	Email   string
 	Repo    string
 	Message string
+	SHA     string
 }
 
-func (cs *CommitStream) Start(callback func(Commit)) {
+func (cs *CommitStream) Start(handler Handler) {
 	gh := GithubHandler{
 		Cstream: cs,
 	}
 
-	var results = make(chan FeedResult)
+	//var handledCounter uint64
+
+	var commitsChan = make(chan []Commit, 200)
 
 	go func() {
-		for result := range results {
-			for e, n := range result.CommitAuthors {
-				c := Commit{Name: n, Email: e, Repo: result.RepoName}
-				if cs.Filter.IncludeMessages != false {
-					c.Message = result.Message
-				}
-
-				if cs.isMatch(c) {
-					cs.outputMatch(c, callback)
-				}
+		for range time.Tick(time.Second * 1) {
+			if cs.Debug == true {
+				s := cs.Stats
+				log.Printf("incoming: %d, processed: %d, accepted: %d, total: %d, chan sz:%d\n",
+					s.IncomingRate, s.ProcessedRate,
+					s.FilteredRate, s.Total, len(commitsChan))
 			}
+			atomic.AddUint32(&cs.Stats.Total, cs.Stats.FilteredRate)
+			atomic.StoreUint32(&cs.Stats.ProcessedRate, 0)
+			atomic.StoreUint32(&cs.Stats.FilteredRate, 0)
+			atomic.StoreUint32(&cs.Stats.IncomingRate, 0)
 		}
 	}()
 
-	gh.Run(results)
+	go func() {
+		for commits := range commitsChan {
+			var filteredCommits []Commit
+			for _, commit := range commits {
+				if cs.Filter.IncludeMessages == false {
+					commit.Message = ""
+				}
+				atomic.AddUint32(&cs.Stats.ProcessedRate, 1)
+				if cs.filter(commit) {
+					atomic.AddUint32(&cs.Stats.FilteredRate, 1)
+					filteredCommits = append(filteredCommits, commit)
+				}
+			}
+			cs.execHandler(filteredCommits, handler)
+		}
+
+	}()
+
+	gh.Run(commitsChan)
 
 }
 
-func (cs *CommitStream) isMatch(c Commit) bool {
+func (cs *CommitStream) filter(c Commit) bool {
 
 	if cs.Filter.IgnorePrivateEmails == true {
 		if strings.Contains(c.Email, "@users.noreply.github.com") {
@@ -92,11 +128,11 @@ func (cs *CommitStream) isMatch(c Commit) bool {
 	return result
 }
 
-func (cs *CommitStream) outputMatch(c Commit, callback func(Commit)) {
-	//s := []string{c.name, c.email, c.repo}
+func (cs *CommitStream) execHandler(commits []Commit, handler Handler) {
+
 	//tm := time.Now().UTC().Format("2006-01-02T15:04:05")
 
 	cs.mu.Lock()
-	callback(c)
+	handler.Callback(commits)
 	cs.mu.Unlock()
 }

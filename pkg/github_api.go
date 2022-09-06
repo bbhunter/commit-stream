@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -68,7 +69,7 @@ func (gh *GithubHandler) checkResponseError(err error, resp *github.Response) bo
 	return false
 }
 
-func (gh *GithubHandler) Run(results chan<- FeedResult) {
+func (gh *GithubHandler) Run(results chan<- []Commit) {
 	options := gh.Cstream.GithubOptions
 
 	gh.session.ctx = context.Background()
@@ -91,39 +92,35 @@ func (gh *GithubHandler) Run(results chan<- FeedResult) {
 				continue
 			}
 
+			var commits []Commit
 			for _, e := range events {
 
 				if *e.Type == "PushEvent" {
-					//fmt.Println(github.Stringify(e))
-					var result FeedResult
-					result.CommitAuthors = make(map[string]string)
-
-					result.RepoName = *e.GetRepo().Name
 
 					p, _ := e.ParsePayload()
 
 					q := p.(*github.PushEvent)
 
 					for _, r := range q.Commits {
+						var commit Commit
+						commit.Repo = *e.GetRepo().Name
+						commit.Email = *r.GetAuthor().Email
+						commit.Message = *r.Message
+						commit.Name = *r.GetAuthor().Name
+						commit.SHA = *r.SHA
 
-						//fmt.Printf("%v\n", github.Stringify(r))
-						email := *r.GetAuthor().Email
-						name := *r.GetAuthor().Name
-						message := *r.Message
+						atomic.AddUint32(&gh.Cstream.Stats.IncomingRate, 1)
 
-						result.CommitAuthors[email] = name
-						result.SHA = *r.SHA
-						result.Message = message
+						commits = append(commits, commit)
 						if gh.Cstream.Filter.SearchAllCommits == false {
 							break
 						}
 					}
-					//fmt.Println(result.CommitAuthors)
-
-					results <- result
 
 				}
 			}
+			results <- commits
+
 			//fmt.Fprintf(os.Stderr, "\r%d/%d remaining\n", resp.Rate.Remaining, resp.Rate.Limit)
 			if resp.NextPage == 0 {
 				break

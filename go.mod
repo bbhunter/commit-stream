@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/google/go-github v17.0.0+incompatible
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
