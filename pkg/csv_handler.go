@@ -18,7 +18,8 @@ func (n NoHandler) Callback(commits []Commit) {
 func (h CsvHander) Callback(commits []Commit) {
 	w := csv.NewWriter(os.Stdout)
 	for _, c := range commits {
-		cOut := []string{c.Name, c.Email, "https://github.com/" + c.Repo, c.Message}
+		email := c.Email.User + "@" + c.Email.Domain
+		cOut := []string{c.Name, email, "https://github.com/" + c.Repo, c.Message}
 
 		w.Write(cOut)
 	}

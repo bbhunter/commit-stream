@@ -17,12 +17,13 @@ type ElasticHandler struct {
 }
 
 func (e ElasticHandler) Callback(commits []Commit) {
-	e.ImportBulk(commits)
+	//e.ImportBulk(commits)
+	e.Import((commits[0]))
 }
 
 func (e *ElasticHandler) Import(commit Commit) {
 
-	path := "/api/commits/_doc"
+	path := "/api/commitstest/_doc"
 
 	data, err := json.Marshal(commit)
 	if err != nil {

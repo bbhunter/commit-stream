@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -27,7 +28,6 @@ type FeedResult struct {
 	CommitAuthors map[string]string
 	RepoName      string
 	RepoURL       string
-	SHA           string
 	Message       string
 }
 
@@ -104,10 +104,20 @@ func (gh *GithubHandler) Run(results chan<- []Commit) {
 					for _, r := range q.Commits {
 						var commit Commit
 						commit.Repo = *e.GetRepo().Name
-						commit.Email = *r.GetAuthor().Email
+						//commit.Email = *r.GetAuthor().Email
 						commit.Message = *r.Message
 						commit.Name = *r.GetAuthor().Name
-						commit.SHA = *r.SHA
+
+						email := *r.GetAuthor().Email
+						if strings.Contains(email, "@") {
+							parts := strings.Split(email, "@")
+							commit.Email.User = parts[0]
+							commit.Email.Domain = parts[1]
+						} else {
+							commit.Email.User = email
+						}
+
+						//commit.SHA = *r.SHA
 
 						atomic.AddUint32(&gh.Cstream.Stats.IncomingRate, 1)
 

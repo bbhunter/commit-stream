@@ -41,8 +41,11 @@ type Filter struct {
 }
 
 type Commit struct {
-	Name    string
-	Email   string
+	Name  string
+	Email struct {
+		User   string
+		Domain string
+	}
 	Repo    string
 	Message string
 	SHA     string
@@ -97,7 +100,7 @@ func (cs *CommitStream) Start(handler Handler) {
 func (cs *CommitStream) filter(c Commit) bool {
 
 	if cs.Filter.IgnorePrivateEmails == true {
-		if strings.Contains(c.Email, "@users.noreply.github.com") {
+		if strings.Contains(c.Email.Domain, "users.noreply.github.com") {
 			return false
 		}
 	}
@@ -111,7 +114,8 @@ func (cs *CommitStream) filter(c Commit) bool {
 	if cs.Filter.Email != "" {
 		//fmt.Printf("checking %s against %s\n", email, fo.email)
 		for _, e := range strings.Split(cs.Filter.Email, ",") {
-			if strings.Contains(c.Email, strings.TrimSpace(e)) {
+			email := c.Email.User + "@" + c.Email.Domain
+			if strings.Contains(email, strings.TrimSpace(e)) {
 				result = true
 			}
 		}
