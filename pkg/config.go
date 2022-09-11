@@ -18,9 +18,11 @@ type Config struct {
 type YamlConfig struct {
 	Destination   string
 	Elasticsearch struct {
-		Uri      string
-		Username string
-		Password string
+		Uri          string
+		Username     string
+		Password     string
+		UseZincAwsS3 bool `yaml:"use-zinc-aws-s3"`
+		NoDuplicates bool `yaml:"no-duplicates"`
 	}
 
 	Github struct {

@@ -49,7 +49,7 @@ func init() {
 		h += "  -i  --ignore-priv     Ignore noreply.github.com private email addresses (default: false)\n"
 		h += "  -m  --messages        Fetch commit messages (default: false)\n"
 		h += "  -c  --config [ path ] Use configuration file (default: config.yaml)\n"
-		h += "  -d  --debug           Enable debug messages (to stdout)"
+		h += "  -d  --debug           Enable debug messages to stdout (default:false)\n"
 		h += "\n\n"
 		fmt.Fprintf(os.Stderr, h)
 	}
@@ -113,18 +113,34 @@ func main() {
 
 	if config.Settings.Destination == "elastic" {
 		settings := config.Settings.Elasticsearch
+
 		log.Printf("Using ElasticSearch database: %s\n", settings.Uri)
 		handler = commitstream.ElasticHandler{
-			RemoteURI: settings.Uri,
-			Username:  settings.Username,
-			Password:  settings.Password,
+			RemoteURI:    settings.Uri,
+			Username:     settings.Username,
+			Password:     settings.Password,
+			NoDuplicates: settings.NoDuplicates,
+			UseZincAwsS3: settings.UseZincAwsS3,
 		}
+		h := handler.(commitstream.ElasticHandler)
+		h.Setup()
 
 	} else {
 		log.Println("Outputting to stdout")
 		handler = commitstream.CsvHander{}
 	}
+	/*
+		c := commitstream.Commit{}
+		c.Email.User = "test"
+		c.Email.Domain = "test"
+		c.Repo = "repo2	"
+		c.Name = "blah2"
+		ca := make([]commitstream.Commit, 1)
+		ca[0] = c
 
+		handler.Callback(ca)
+		return
+	*/
 	githubOptions := commitstream.GithubOptions{
 		AuthToken: authToken,
 	}
@@ -135,6 +151,5 @@ func main() {
 		Debug:         debug,
 	}
 
-	//handler = commitstream.NoHandler{}
 	cs.Start(handler)
 }

@@ -9,4 +9,4 @@ elasticsearch:
   password: admin
   
   no-duplicates: true
-
+  use-zinc-aws-s3: true

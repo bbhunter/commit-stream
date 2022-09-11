@@ -48,7 +48,6 @@ type Commit struct {
 	}
 	Repo    string
 	Message string
-	SHA     string
 }
 
 func (cs *CommitStream) Start(handler Handler) {

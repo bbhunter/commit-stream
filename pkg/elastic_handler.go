@@ -1,7 +1,7 @@
 package commitstream
 
 import (
-	"bytes"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,48 +11,65 @@ import (
 )
 
 type ElasticHandler struct {
-	RemoteURI string
-	Username  string
-	Password  string
+	RemoteURI    string
+	Username     string
+	Password     string
+	NoDuplicates bool
+	UseZincAwsS3 bool
 }
 
 func (e ElasticHandler) Callback(commits []Commit) {
-	//e.ImportBulk(commits)
-	e.Import((commits[0]))
+	//e.Import((commits[0]))
+	e.ImportBulk(commits)
 }
 
+func (e *ElasticHandler) DoPost(path string, data string) {
+	req, err := http.NewRequest("POST", e.RemoteURI+path, strings.NewReader(data))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if e.Username != "" {
+		req.SetBasicAuth(e.Username, e.Password)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(resp.StatusCode)
+			log.Println(err)
+		}
+		fmt.Println(string(body))
+	}
+	defer resp.Body.Close()
+}
+
+func (e *ElasticHandler) Setup() {
+	if e.UseZincAwsS3 == true {
+		log.Println("Using AWS S3 storage")
+		path := "/api/index"
+		storageRequest := `{"name": "commits", "storage_type": "s3"}`
+		e.DoPost(path, storageRequest)
+	} else {
+		fmt.Println("Using local storage")
+	}
+
+}
 func (e *ElasticHandler) Import(commit Commit) {
 
-	path := "/api/commitstest/_doc"
+	path := "/api/commits/_doc"
 
 	data, err := json.Marshal(commit)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req, err := http.NewRequest("POST", e.RemoteURI+path, bytes.NewReader(data))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if e.Username != "" {
-		req.SetBasicAuth(e.Username, e.Password)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		log.Fatal(err)
-
-		log.Println(resp.StatusCode)
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(string(body))
-	} else {
-		resp.Body.Close()
-	}
+	e.DoPost(path, string(data))
 }
 
 func (e *ElasticHandler) ImportBulk(commits []Commit) {
@@ -60,34 +77,23 @@ func (e *ElasticHandler) ImportBulk(commits []Commit) {
 	path := "/api/_bulk"
 
 	var entry string
+
 	for _, commit := range commits {
 		data, err := json.Marshal(commit)
 		if err == nil {
-			entry = entry + `{ "index" : { "_index" : "commits" } }`
+			if e.NoDuplicates == true {
+				key := []byte(commit.Repo + commit.Email.Domain)
+				id := fmt.Sprintf("%x", md5.Sum(key))
+				entry = entry + `{ "index" : { "_index" : "commits", "_id" : "` + id + `"} }`
+			} else {
+				entry = entry + `{ "index" : { "_index" : "commits" } }`
+			}
+
 			entry = entry + "\n" + string(data) + "\n"
 		} else {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
-
-	req, err := http.NewRequest("POST", e.RemoteURI+path, strings.NewReader(entry))
-	if err != nil {
-		log.Fatal(err)
-	}
-	if e.Username != "" {
-		req.SetBasicAuth(e.Username, e.Password)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal(err)
-		defer resp.Body.Close()
-		log.Println(resp.StatusCode)
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(string(body))
-	}
+	e.DoPost(path, entry)
+	return
 }
