@@ -1,7 +1,10 @@
 package commitstream
 
 import (
+	"bufio"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -38,6 +41,8 @@ type Filter struct {
 	IgnorePrivateEmails bool
 	IncludeMessages     bool
 	SearchAllCommits    bool
+	DomainsFile         string
+	DomainsList         map[string]bool
 }
 
 type Commit struct {
@@ -51,6 +56,29 @@ type Commit struct {
 }
 
 func (cs *CommitStream) Start(handler Handler) {
+
+	if cs.Filter.Email == "" && cs.Filter.Name == "" {
+		cs.Filter.Enabled = false
+	} else {
+		cs.Filter.Enabled = true
+	}
+	if cs.Filter.DomainsFile != "" {
+		cs.Filter.DomainsList = make(map[string]bool)
+		f, err := os.Open(cs.Filter.DomainsFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			cs.Filter.DomainsList[scanner.Text()] = true
+		}
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+		cs.Filter.Enabled = true
+
+	}
 	gh := GithubHandler{
 		Cstream: cs,
 	}
@@ -63,9 +91,10 @@ func (cs *CommitStream) Start(handler Handler) {
 		for range time.Tick(time.Second * 1) {
 			if cs.Debug == true {
 				s := cs.Stats
-				log.Printf("incoming: %d, processed: %d, accepted: %d, total: %d, chan sz:%d\n",
-					s.IncomingRate, s.ProcessedRate,
-					s.FilteredRate, s.Total, len(commitsChan))
+
+				msg := fmt.Sprintf("incoming: %d, processed: %d, accepted: %d, total: %d, chan sz:%d\n",
+					s.IncomingRate, s.ProcessedRate, s.FilteredRate, s.Total, len(commitsChan))
+				os.Stderr.WriteString(msg)
 			}
 			atomic.AddUint32(&cs.Stats.Total, cs.Stats.FilteredRate)
 			atomic.StoreUint32(&cs.Stats.ProcessedRate, 0)
@@ -110,8 +139,13 @@ func (cs *CommitStream) filter(c Commit) bool {
 
 	result := false
 
+	if len(cs.Filter.DomainsList) != 0 {
+		if ok := cs.Filter.DomainsList[c.Email.Domain]; ok {
+			return true
+		}
+	}
 	if cs.Filter.Email != "" {
-		//fmt.Printf("checking %s against %s\n", email, fo.email)
+
 		for _, e := range strings.Split(cs.Filter.Email, ",") {
 			email := c.Email.User + "@" + c.Email.Domain
 			if strings.Contains(email, strings.TrimSpace(e)) {

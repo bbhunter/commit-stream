@@ -2,13 +2,13 @@
 
 `commit-stream` drinks commit logs from the Github event firehose exposing the author details (name and email address) associated with Github repositories in real time. 
 
-OSINT / Recon uses for  Redteamers / Bug bounty hunters: 
+OSINT / Recon uses for Redteamers / Bug bounty hunters: 
 
 * Uncover repositories which employees of a target company is commiting code (filter by email domain)
 * Identify repositories belonging to an individual (filter by author name)
 * Chain with other tools such as trufflehog to extract secrets in uncovered repositories.
 
-Defenders may find the tool useful to discover repositories that employees are committing intellectual property to.
+Companies have found the tool useful to discover repositories that their employees are committing intellectual property to.
 
 [![asciicast](https://asciinema.org/a/317469.svg)](https://asciinema.org/a/317469)
 
@@ -33,18 +33,21 @@ Usage:
   commit-stream [OPTIONS]
 
 Options:
-  -e, --email           Match email addresses field (specify multiple with comma).                                                Omit to match all.
-  -n, --name            Match author name field (specify multiple with comma).
-                        Omit to match all.
-  -t, --token           Github token (if not specified, will use environment
-                        variable 'CSTREAM_TOKEN')
-  -a  --all-commits     Search through previous commit history (default: false)
-  -i  --ignore-priv     Ignore noreply.github.com private email addresses (default: false)
-  -m  --messages        Fetch commit messages (default: false)
-  -c  --config [ path ] Use configuration file (default: config.yaml)
-  -d  --debug           Enable debug messages to stdout (default:false)
+  -e, --email            Match email addresses field (specify multiple with comma)
+                         Omit to match all.
+  -df --dom-file <file>  Match email domains specificed in file
+  -n, --name             Match author name field (specify multiple with comma).
+                         Omit to match all.
+  -t, --token            Github token (if not specified, will use environment
+                         variable 'CSTREAM_TOKEN' or from config.yaml)
+  -a  --all-commits      Search through previous commit history (default: false)
+  -i  --ignore-priv      Ignore noreply.github.com private email addresses (default: false)
+  -m  --messages         Fetch commit messages (default: false)
+  -c  --config [path]    Use configuration file. Required for ElasticSearch (default: config.yaml)
+  -d  --debug            Enable debug messages to stderr (default:false)
 ```
 
+### Tokens
 `commit-stream` requires a Github personal access token to be used. You can generate a token navigating in Github [Settings / Developer Settings /  Personal Access Tokens] then selecting 'Generate new token'. Nothing here needs to be selected, just enter the name of the token and click generate.
 
 Once the token has been created, the recommended method is to set it via an environment variable `CSTREAM_TOKEN`:
@@ -61,6 +64,7 @@ github:
   token: ghp_xxxxx
 ```
 
+### Filtering
 When running `commit-stream` with no options, it will immediately dump author details and the associated repositories in CSV format to the terminal. Filtering options are available. 
 
 To filter by email domain:
@@ -78,6 +82,13 @@ Multiple keywords can be specified with a `,` character. e.g.
 ./commit-stream --email '@telsa.com,@ford.com'
 ```
 
+Filtering on domain names specified in a text file with `-df, --dom-file` where the file is the domain (no `@`)
+```
+./commit-stream --dom-file domainlist.txt
+```
+
+Email addresses that have been set to private (`@users.noreply.github.com`) can be ommited by specifying `--ignore-priv`. This is useful to reduce the volume of data collected if running the tool for an extended period of time.
+
 ## Elastic Search / Zinc
 To export to an Elastic Search database, populate `config.yaml`:
 ```
@@ -85,13 +96,26 @@ destination: elastic
 
 elasticsearch:
   uri: http://127.0.0.1:4080
+```
+
+### Zinc using Amazon S3 buckets
+A very quick and easy way to get up and running an Elastic Search type database, using Amazon AWX S3 buckets for storage is to use Zinc, which is a single binary implementation of Elastic Search.
+
+In `config.yaml` a username and password is required. Set `use-zinc-aws-s3` to true. 
+```
+elasticsearch:
+  uri: http://127.0.0.1:4080
   username: admin
   password: admin
+
+  use-zinc-aws-s3: true
+  no-duplicates: true
 ```
+
+
 
 It is possible to search upto 20 previous commits for the filter keywords by specifying `--all-commits`. This may increase the likelihood of a positive matches.
 
-Email addresses that have been set to private (`@users.noreply.github.com`) can be ommited by specifying `--ignore-priv`. This is useful to reduce the volume of data collected if running the tool for an extended period of time.
 
 ## Credits
 Some inspiration was taken from [@Darkport's](https://twitter.com/darkp0rt) [ssshgit](https://github.com/eth0izzle/shhgit) excellent tool to extract secrets from Github in real-time. `commit-stream`'s objective is slightly different as it focuses on extracting the 'meta-data' as opposed to the content of the repositories.

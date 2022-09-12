@@ -1,12 +1,16 @@
 github:
   token: ghp_xxxxx
 
-destination: elastic
+# stdout, elasticsearch or script
+destination: stdout
 
 elasticsearch:
   uri: http://127.0.0.1:4080
   username: admin
   password: admin
   
-  no-duplicates: true
   use-zinc-aws-s3: true
+  no-duplicates: true
+
+script:
+  path: ./test.sh

@@ -28,6 +28,10 @@ type YamlConfig struct {
 	Github struct {
 		Token string
 	}
+
+	Script struct {
+		Path string
+	}
 }
 
 func (c *Config) validate() error {
