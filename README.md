@@ -102,7 +102,7 @@ elasticsearch:
 ```
 
 ### Zinc using Amazon S3 buckets
-A very quick and easy way to get up and running an Elastic Search type database, using Amazon AWS S3 buckets for storage is to use Zinc, which is a single (Go) binary implementation of Elastic Search. It provides a nice web user interface, similar to Kibana, but self contained in the same binary as the Elastic Search engine.
+A very quick and easy way to get up and running an Elastic Search type database, using Amazon AWS S3 buckets for storage is to use [Zinc](https://github.com/zinclabs/zinc), which is a single (Go) binary implementation of Elastic Search. It provides a nice web user interface, similar to Kibana, but self contained in the same binary as the Elastic Search engine.
 
 In `config.yaml` a username and password is required. Set `use-zinc-aws-s3` to true. 
 ```
@@ -131,6 +131,9 @@ export ZINC_S3_BUCKET=cstream
 ./zinc &
 ./commit-stream &
 ```
+
+Then browsing to http://127.0.0.1/4080:
+![Image](https://i.imgur.com/kNBKSkP.png)
 
 ## Credits
 Some inspiration was taken from [@Darkport's](https://twitter.com/darkp0rt) [ssshgit](https://github.com/eth0izzle/shhgit) excellent tool to extract secrets from Github in real-time. `commit-stream`'s objective is slightly different as it focuses on extracting the 'meta-data' as opposed to the content of the repositories.
