@@ -14,10 +14,10 @@ type FlagOptions struct {
 }
 
 func PopulateOptions(f *FlagOptions) {
-	flag.StringVar(&f.Filter.Email, "email", "", "")
+	flag.StringVar(&f.Filter.Email, "email-domain", "", "")
 	flag.StringVar(&f.Filter.Email, "e", "", "")
 
-	flag.StringVar(&f.Filter.Name, "name", "", "")
+	flag.StringVar(&f.Filter.Name, "email-name", "", "")
 	flag.StringVar(&f.Filter.Name, "n", "", "")
 
 	flag.StringVar(&f.AuthToken, "token", "", "")

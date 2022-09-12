@@ -33,18 +33,19 @@ Usage:
   commit-stream [OPTIONS]
 
 Options:
-  -e, --email            Match email addresses field (specify multiple with comma)
-                         Omit to match all.
-  -df --dom-file <file>  Match email domains specificed in file
-  -n, --name             Match author name field (specify multiple with comma).
-                         Omit to match all.
   -t, --token            Github token (if not specified, will use environment
                          variable 'CSTREAM_TOKEN' or from config.yaml)
+  -e, --email-domain     Match email addresses field (specify multiple with comma)
+                         Omit to match all.
+  -n, --email-name       Match author name field (specify multiple with comma).
+                         Omit to match all.
+  -df --dom-file <file>  Match email domains specificed in file
   -a  --all-commits      Search through previous commit history (default: false)
   -i  --ignore-priv      Ignore noreply.github.com private email addresses (default: false)
   -m  --messages         Fetch commit messages (default: false)
   -c  --config [path]    Use configuration file. Required for ElasticSearch (default: config.yaml)
   -d  --debug            Enable debug messages to stderr (default:false)
+  -h  --help             This message
 ```
 
 ### Tokens
@@ -69,20 +70,20 @@ When running `commit-stream` with no options, it will immediately dump author de
 
 To filter by email domain:
 ```
-./commit-stream --email '@company.com'
+./commit-stream --email-domain 'company.com'
 ```
 
 To filter by author name:
 ```
-./commit-stream --name 'John Smith'
+./commit-stream --email-name 'John Smith'
 ```
 
 Multiple keywords can be specified with a `,` character. e.g.
 ```
-./commit-stream --email '@telsa.com,@ford.com'
+./commit-stream --email-domain 'telsa.com,ford.com'
 ```
 
-Filtering on domain names specified in a text file with `-df, --dom-file` where the file is the domain (no `@`)
+To filter on a list of domain names specified in a text file, use  `-df, --dom-file`:
 ```
 ./commit-stream --dom-file domainlist.txt
 ```

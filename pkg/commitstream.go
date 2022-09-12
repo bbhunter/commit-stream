@@ -147,8 +147,9 @@ func (cs *CommitStream) filter(c Commit) bool {
 	if cs.Filter.Email != "" {
 
 		for _, e := range strings.Split(cs.Filter.Email, ",") {
-			email := c.Email.User + "@" + c.Email.Domain
-			if strings.Contains(email, strings.TrimSpace(e)) {
+			//email := c.Email.User + "@" + c.Email.Domain
+
+			if strings.Contains(c.Email.Domain, strings.TrimSpace(e)) {
 				result = true
 			}
 		}
@@ -166,9 +167,6 @@ func (cs *CommitStream) filter(c Commit) bool {
 }
 
 func (cs *CommitStream) execHandler(commits []Commit, handler Handler) {
-
-	//tm := time.Now().UTC().Format("2006-01-02T15:04:05")
-
 	cs.mu.Lock()
 	handler.Callback(commits)
 	cs.mu.Unlock()
