@@ -30,7 +30,8 @@ type YamlConfig struct {
 	}
 
 	Script struct {
-		Path string
+		Path       string
+		MaxWorkers int `yaml:"max-workers"`
 	}
 }
 

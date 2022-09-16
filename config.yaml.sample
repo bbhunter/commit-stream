@@ -14,3 +14,4 @@ elasticsearch:
 
 script:
   path: ./test.sh
+  max-workers: 10
