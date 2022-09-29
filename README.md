@@ -93,3 +93,11 @@ Email addresses that have been set to private (`@users.noreply.github.com`) can 
 It is possible to search upto 20 previous commits for the filter keywords by specifying `--all-commits`. This may increase the likelihood of a positive matches.
 
 commit-stream supports importing into Elastic Search. See [using Elastic Search](elasticsearch.md)
+
+## Credits
+Some inspiration was taken from [@Darkport's](https://twitter.com/darkp0rt) [ssshgit](https://github.com/eth0izzle/shhgit) excellent tool to extract secrets from Github in real-time. `commit-stream`'s objective is slightly different as it focuses on extracting the 'meta-data' as opposed to the content of the repositories.
+
+### Note
+Github provides the ability to prevent email addresses from being exposed. In the Github settings select `Keep my email addresses private` and `Block command line pushes that expose my email` under the Email options.
+
+As only one token is used this software does not breach any terms of use with Github. That said, use at your own risk. The author does not hold any responsibility for it's usage.
