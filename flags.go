@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	commitstream "github.com/robhax/commit-stream/pkg"
+	commitstream "github.com/x1sec/commit-stream/pkg"
 )
 
 type FlagOptions struct {

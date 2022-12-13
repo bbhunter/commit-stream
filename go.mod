@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/google/go-github v17.0.0+incompatible
-	github.com/robhax/commit-stream v0.1.3
 	golang.org/x/oauth2 v0.3.0
 	gopkg.in/yaml.v2 v2.4.0
 )
