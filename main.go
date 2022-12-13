@@ -97,12 +97,6 @@ func main() {
 		h := handler.(commitstream.ElasticHandler)
 		h.Setup()
 
-	} else if config.Settings.Destination == "script" {
-		log.Println("Outputting to script")
-		handler = commitstream.ScriptHandler{
-			Path:       config.Settings.Script.Path,
-			MaxWorkers: config.Settings.Script.MaxWorkers,
-		}
 	} else {
 		log.Println("Outputting to stdout")
 		handler = commitstream.CsvHander{}
