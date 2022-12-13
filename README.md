@@ -14,16 +14,12 @@ Companies have found the tool useful to discover repositories that their employe
 
 ## Installation
 ### Binaries
-Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/robhax/commit-stream/releases/)
+Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/x1sec/commit-stream/releases/)
 
-### Go get
+### Building from source
 If you would prefer to build yourself (and Go is setup [correctly](https://golang.org/doc/install)):
 ```
-go get -u github.com/robhax/commit-stream
-```
-### Building from source
-```
-go get && go build
+▶ go install github.com/x1sec/commit-stream@latest
 ```
 
 # Usage

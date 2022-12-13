@@ -1,6 +1,6 @@
 /*
 commit-stream
-Author: https://twitter.com/robhax
+Author: https://twitter.com/haxrob
 
 See LICENSE
 */
@@ -13,7 +13,7 @@ import (
 	"log"
 	"os"
 
-	commitstream "github.com/robhax/commit-stream/pkg"
+	commitstream "github.com/x1sec/commit-stream/pkg"
 )
 
 func printAscii() {
