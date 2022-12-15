@@ -19,7 +19,6 @@ type ElasticHandler struct {
 }
 
 func (e ElasticHandler) Callback(commits []Commit) {
-	//e.Import((commits[0]))
 	e.ImportBulk(commits)
 }
 

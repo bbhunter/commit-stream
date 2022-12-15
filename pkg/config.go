@@ -52,7 +52,8 @@ func (c *Config) Load() error {
 	}
 	f, err := os.Open(c.FilePath)
 	if errors.Is(err, os.ErrNotExist) {
-		return errors.New("Unable to load config file: " + c.FilePath + ", using runtime settings.")
+		return nil
+		//return errors.New("Unable to load config file: " + c.FilePath + ", using runtime settings.")
 	}
 	if err != nil {
 		return err

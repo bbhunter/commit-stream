@@ -16,10 +16,15 @@ Companies have found the tool useful to discover repositories that their employe
 ### Binaries
 Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/x1sec/commit-stream/releases/)
 
+## Docker
+```
+docker run x1sec/commit-stream
+```
+
 ### Building from source
 If you would prefer to build yourself (and Go is setup [correctly](https://golang.org/doc/install)):
 ```
-▶ go install github.com/x1sec/commit-stream@latest
+go install github.com/x1sec/commit-stream@latest
 ```
 
 # Usage

@@ -25,7 +25,7 @@ func printAscii() {
 ██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║   ██║╚════╝╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║
 ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║   ██║      ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝   ╚═╝      ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ 
-v0.1.5 https://github.com/x1sec/commit-stream       
+v0.2.0 https://github.com/x1sec/commit-stream | Twitter: @haxrob      
 
 `
 	fmt.Fprintf(os.Stderr, h)
@@ -81,7 +81,7 @@ func main() {
 		authToken = flags.AuthToken
 	}
 	if authToken == "" {
-		log.Fatal("No Github token specified. Use '-t', environment variable CSTREAM_TOKEN or specifying in config.yaml\n")
+		log.Fatal("No Github token specified. Use '-t', or set environment variable CSTREAM_TOKEN or specify in config.yaml. -h for help.\n")
 	}
 
 	if config.Settings.Destination == "elastic" {
@@ -99,7 +99,6 @@ func main() {
 		h.Setup()
 
 	} else {
-		log.Println("Outputting to stdout")
 		handler = commitstream.CsvHander{}
 	}
 
