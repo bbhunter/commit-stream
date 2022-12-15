@@ -1,6 +1,7 @@
 /*
 commit-stream
 Author: https://twitter.com/haxrob
+https://github.com/x1sec/commit-stream
 
 See LICENSE
 */
@@ -49,7 +50,7 @@ func init() {
 		h += "  -a  --all-commits      Search through previous commit history (default: false)\n"
 		h += "  -i  --ignore-priv      Ignore noreply.github.com private email addresses (default: false)\n"
 		h += "  -m  --messages         Fetch commit messages (default: false)\n"
-		h += "  -c  --config [path]    Use configuration file. Required for ElasticSearch (default: config.yaml)\n"
+		h += "  -c  --config [path]    Use configuration file (optional)\n"
 		h += "  -d  --debug            Enable debug messages to stderr (default:false)\n"
 		h += "  -h  --help             This message\n"
 		h += "\n\n"
