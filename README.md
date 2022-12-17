@@ -1,8 +1,8 @@
 # Commit Stream
-![GitHub](https://img.shields.io/github/license/x1sec/commit-stream)
-![GitHub all releases](https://img.shields.io/github/downloads/x1sec/commit-stream/total)
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/x1sec/commit-stream)
-![Twitter Follow](https://img.shields.io/twitter/follow/haxrob?style=social)
+[![GitHub](https://img.shields.io/github/license/x1sec/commit-stream)](https://github.com/x1sec/commit-stream/blob/master/LICENSE)
+[![GitHub all releases](https://img.shields.io/github/downloads/x1sec/commit-stream/total)](https://github.com/x1sec/commit-stream/releases)
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/x1sec/commit-stream)](https://go.dev/)
+[![Twitter Follow](https://img.shields.io/twitter/follow/haxrob?style=social)](https://twitter.com/intent/follow?screen_name=haxrob)
 
 `commit-stream` drinks commit logs from the Github event firehose exposing the author details (name and email address) associated with Github repositories in real time. 
 
