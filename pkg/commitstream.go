@@ -27,6 +27,7 @@ type CommitStream struct {
 	Filter        *Filter
 	Stats         ProcessingStats
 	Debug         bool
+	GhUtil        GithubUtil
 }
 
 type GithubOptions struct {
@@ -43,6 +44,7 @@ type Filter struct {
 	SearchAllCommits    bool
 	DomainsFile         string
 	DomainsList         map[string]bool
+	PublicEvent         bool
 }
 
 type Commit struct {
@@ -51,8 +53,9 @@ type Commit struct {
 		User   string
 		Domain string
 	}
-	Repo    string
-	Message string
+	Repo      string
+	Message   string
+	EventType string
 }
 
 func (cs *CommitStream) Start(handler Handler) {
@@ -132,12 +135,16 @@ func (cs *CommitStream) filter(c Commit) bool {
 			return false
 		}
 	}
-
 	if cs.Filter.Enabled == false {
 		return true
 	}
 
 	result := false
+	if cs.Filter.PublicEvent == false {
+		if c.EventType == "public" {
+			return false
+		}
+	}
 
 	if len(cs.Filter.DomainsList) != 0 {
 		if ok := cs.Filter.DomainsList[c.Email.Domain]; ok {

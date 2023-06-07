@@ -50,6 +50,7 @@ func init() {
 		h += "  -a  --all-commits      Search through previous commit history (default: false)\n"
 		h += "  -i  --ignore-priv      Ignore noreply.github.com private email addresses (default: false)\n"
 		h += "  -m  --messages         Fetch commit messages (default: false)\n"
+		h += "  -p  --public-events    Fetch on repositories made public (default: true)\n"
 		h += "  -c  --config [path]    Use configuration file (optional)\n"
 		h += "  -d  --debug            Enable debug messages to stderr (default:false)\n"
 		h += "  -h  --help             This message\n"
@@ -84,6 +85,11 @@ func main() {
 		log.Fatal("No Github token specified. Use '-t', or set environment variable CSTREAM_TOKEN or specify in config.yaml. -h for help.\n")
 	}
 
+	//util := commitstream.GithubUtil{
+	//	Token: authToken,
+	//}
+	//util.GetLastCommitAuthor("x1sec", "gh-user-recon")
+	//os.Exit(0)
 	if config.Settings.Destination == "elastic" {
 		settings := config.Settings.Elasticsearch
 
@@ -106,10 +112,14 @@ func main() {
 		AuthToken: authToken,
 	}
 
+	ghUtil := commitstream.GithubUtil{
+		Token: authToken,
+	}
 	cs := commitstream.CommitStream{
 		GithubOptions: &githubOptions,
 		Filter:        &flags.Filter,
 		Debug:         flags.Debug,
+		GhUtil:        ghUtil,
 	}
 
 	cs.Start(handler)

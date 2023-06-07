@@ -94,15 +94,27 @@ func (gh *GithubHandler) Run(results chan<- []Commit) {
 
 			var commits []Commit
 			for _, e := range events {
+				if *e.Type == "PublicEvent" {
+					repo := strings.Split(*e.Repo.Name, "/")[1]
+					userName := *e.Actor.Login
+					pCommit, err := gh.Cstream.GhUtil.GetLastCommitAuthor(userName, repo)
+					if err != nil {
+						continue
+					}
+					pCommit.Repo = *e.Repo.Name
+					pCommit.Name = userName
+					commits = append(commits, pCommit)
+					//fmt.Printf("%s: %s, %s, %s", userName, repo, authorName, email)
 
+				}
 				if *e.Type == "PushEvent" {
-
 					p, _ := e.ParsePayload()
 
 					q := p.(*github.PushEvent)
 
 					for _, r := range q.Commits {
 						var commit Commit
+						commit.EventType = "push"
 						commit.Repo = *e.GetRepo().Name
 						//commit.Email = *r.GetAuthor().Email
 						commit.Message = *r.Message
@@ -116,7 +128,6 @@ func (gh *GithubHandler) Run(results chan<- []Commit) {
 						} else {
 							commit.Email.User = email
 						}
-
 						//commit.SHA = *r.SHA
 
 						atomic.AddUint32(&gh.Cstream.Stats.IncomingRate, 1)

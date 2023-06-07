@@ -37,5 +37,8 @@ func PopulateOptions(f *FlagOptions) {
 	flag.StringVar(&f.Filter.DomainsFile, "dom-file", "", "")
 	flag.StringVar(&f.Filter.DomainsFile, "df", "", "")
 
+	flag.BoolVar(&f.Filter.PublicEvent, "public-event", true, "")
+	flag.BoolVar(&f.Filter.PublicEvent, "p", true, "")
+
 	flag.Parse()
 }
