@@ -48,6 +48,7 @@ Options:
   -a  --all-commits      Search through previous commit history (default: false)
   -i  --ignore-priv      Ignore noreply.github.com private email addresses (default: false)
   -m  --messages         Fetch commit messages (default: false)
+  -p  --public-events    Fetch on repositories made public (default: true) 
   -c  --config [path]    Use configuration file (optional)
   -d  --debug            Enable debug messages to stderr (default:false)
   -h  --help             This message
