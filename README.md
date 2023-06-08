@@ -6,11 +6,12 @@
 
 `commit-stream` drinks commit logs from the Github event firehose exposing the author details (name and email address) associated with Github repositories in real time. 
 
-OSINT / Recon uses for Redteamers / Bug bounty hunters: 
+OSINT / Blueteam / Recon uses for Redteamers / Bug bounty hunters: 
 
 * Uncover repositories which employees of a target company is commiting code (filter by email domain)
 * Identify repositories belonging to an individual (filter by author name)
 * Chain with other tools such as trufflehog to extract secrets in uncovered repositories.
+* Alerts to Slack, Elastic Search and others
 
 Companies have found the tool useful to discover repositories that their employees are committing intellectual property to.
 
@@ -32,6 +33,10 @@ go install github.com/x1sec/commit-stream@latest
 ```
 
 # Usage
+```bash
+./commit-stream | tee commits.txt
+```
+With no options specified, commit-stream will output to stdout in csv format. 
 
 ```
 Usage:
@@ -54,8 +59,8 @@ Options:
   -h  --help             This message
 ```
 
-### Tokens
-`commit-stream` requires a Github personal access token to be used. You can generate a token navigating in Github [Settings / Developer Settings /  Personal Access Tokens] then selecting 'Generate new token'. Nothing here needs to be selected, just enter the name of the token and click generate.
+## Tokens
+`commit-stream` requires a Github personal access token to be used. You can generate a token navigating in Github `[Settings / Developer Settings /  Personal Access Tokens]` then selecting 'Generate new token'. Nothing here needs to be selected, just enter the name of the token and click generate.
 
 Once the token has been created, the recommended method is to set it via an environment variable `CSTREAM_TOKEN`:
 ```
@@ -71,7 +76,7 @@ github:
   token: ghp_xxxxx
 ```
 
-### Filtering
+## Filtering
 When running `commit-stream` with no options, it will immediately dump author details and the associated repositories in CSV format to the terminal. Filtering options are available. 
 
 To filter by email domain:
@@ -98,7 +103,89 @@ Email addresses that have been set to private (`@users.noreply.github.com`) can 
 
 It is possible to search upto 20 previous commits for the filter keywords by specifying `--all-commits`. This may increase the likelihood of a positive matches.
 
-commit-stream supports importing into Elastic Search. See [using Elastic Search](elasticsearch.md)
+## Output handlers
+In `config.yaml`, the `destination` parameter is set to one of the following options:
+- stdout
+- elasticsearch
+- slack
+- script
+- truffle
+- truffle-slack 
+
+The appropriate configuration for the destination handler is required.
+
+### Standard out 
+`stdout` handler is the default which outputs to a comma seperated values format to stdout which can be piped into a file. There are no other configuration options.
+
+### SQL Database
+`database` handler writes events to a database with the database type specified by the `engine` parameter.
+`dsn` must be specified for `postgres` and `mysql`
+`path` must be specified for `sqlite` 
+```yaml
+database:
+  # type is either: sqlite, mysql, postgres
+  engine: postgres 
+  
+  # dsn required for mysql or postgres
+  dsn: host=localhost user=postgres dbname=rob port=5432
+  
+  # path only required for sqlite
+  path: ./test.db
+```
+
+### Elastic Search
+`elasticsearch` handler sends events to an elasticsearch database specified by the `uri` parameter:
+```yaml
+elasticsearch:
+  uri: http://127.0.0.1:9200
+  no-duplicates: true
+```
+Note: `no-duplicates` is used to reduce the volume of data stored. Each document index is considered unique by the ID being a hash of the domain name and repository name (user/repo). Older documents with the same ID will be updated with newer commits as the arrive.
+
+Basic auth is supported optionally supported with `username` and `password` parameters.
+### Slack
+`slack` handler requires both a slack token and channel ID to be defined:
+```yaml
+slack:
+  token: xoxb-0000-0000-0000
+  channel-id: myChannel 
+```
+**Note:** To prevent accidental flooding to Slack, a domain/email filter must be specified.
+
+## Script
+`script` handler executes a shell script specified by `path`. Two parameters are passed to the script: Github user and Github repository name.
+```yaml
+script:
+  path: ./script/run.sh
+  log-file: ./script/script.log
+  max-workers: 10
+```
+An example of `./script/run.sh`:
+```
+#!/bin/bash
+echo "Github user: $1"
+echo "Github repo: $2"
+echo "URL: https://github.com/${1}/${2}"
+```
+**Note:** `max-workers` is the number of instances invoked in parallel.  
+
+## Trufflehog
+`trufflehog` handler requires the path of the trufflehog binary to be specified. A Github token is required and this should be different to the one specified in the main commit-stream configuration. 
+```
+truffle:
+  path: ./script/trufflehog
+  max-workers: 5
+
+  github-token: ghp_AAAAAAAAA
+
+  ignore:
+    - Parseur
+```
+**Note:** Trufflehog signatures can be ignored by specifying them in the `ignore` list. This reduces the amount of false positives.
+
+## Trufflehog with Slack notifications
+`trufflehog-slack` handler runs [trufflehog](https://github.com/trufflesecurity/trufflehog) to search for secrets. This handler sends alerts to a Slack channel.
+Both both `trufflehog` and `slack` configurations must be defined.
 
 ## Credits
 Some inspiration was taken from [@Darkport's](https://twitter.com/darkp0rt) [ssshgit](https://github.com/eth0izzle/shhgit) excellent tool to extract secrets from Github in real-time. `commit-stream`'s objective is slightly different as it focuses on extracting the 'meta-data' as opposed to the content of the repositories.

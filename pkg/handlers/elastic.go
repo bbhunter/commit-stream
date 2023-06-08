@@ -1,4 +1,4 @@
-package commitstream
+package handlers
 
 import (
 	"crypto/md5"
@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/x1sec/commit-stream/pkg/commit"
 )
 
 type ElasticHandler struct {
@@ -18,7 +20,8 @@ type ElasticHandler struct {
 	UseZincAwsS3 bool
 }
 
-func (e ElasticHandler) Callback(commits []Commit) {
+func (e ElasticHandler) Callback(commits []commit.CommitEvent) {
+	//e.Import((commits[0]))
 	e.ImportBulk(commits)
 }
 
@@ -59,7 +62,7 @@ func (e *ElasticHandler) Setup() {
 	}
 
 }
-func (e *ElasticHandler) Import(commit Commit) {
+func (e *ElasticHandler) Import(commit commit.CommitEvent) {
 
 	path := "/api/commits/_doc"
 
@@ -71,7 +74,7 @@ func (e *ElasticHandler) Import(commit Commit) {
 	e.DoPost(path, string(data))
 }
 
-func (e *ElasticHandler) ImportBulk(commits []Commit) {
+func (e *ElasticHandler) ImportBulk(commits []commit.CommitEvent) {
 
 	path := "/api/_bulk"
 
@@ -81,7 +84,7 @@ func (e *ElasticHandler) ImportBulk(commits []Commit) {
 		data, err := json.Marshal(commit)
 		if err == nil {
 			if e.NoDuplicates == true {
-				key := []byte(commit.Repo + commit.Email.Domain)
+				key := []byte(commit.RepoName + commit.AuthorEmail.Domain)
 				id := fmt.Sprintf("%x", md5.Sum(key))
 				entry = entry + `{ "index" : { "_index" : "commits", "_id" : "` + id + `"} }`
 			} else {

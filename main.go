@@ -1,7 +1,6 @@
 /*
 commit-stream
-Author: https://twitter.com/haxrob
-https://github.com/x1sec/commit-stream
+Author: https://twitter.com/x1sec
 
 See LICENSE
 */
@@ -11,10 +10,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
-	commitstream "github.com/x1sec/commit-stream/pkg"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/x1sec/commit-stream/pkg/conf"
+	"github.com/x1sec/commit-stream/pkg/database"
+	"github.com/x1sec/commit-stream/pkg/github"
+	"github.com/x1sec/commit-stream/pkg/handlers"
+	"github.com/x1sec/commit-stream/pkg/stream"
 )
 
 func printAscii() {
@@ -25,7 +29,7 @@ func printAscii() {
 ██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║   ██║╚════╝╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║
 ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║   ██║      ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝   ╚═╝      ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ 
-v0.2.0 https://github.com/x1sec/commit-stream | Twitter: @haxrob      
+https://github.com/x1sec/commit-stream       
 
 `
 	fmt.Fprintf(os.Stderr, h)
@@ -50,8 +54,7 @@ func init() {
 		h += "  -a  --all-commits      Search through previous commit history (default: false)\n"
 		h += "  -i  --ignore-priv      Ignore noreply.github.com private email addresses (default: false)\n"
 		h += "  -m  --messages         Fetch commit messages (default: false)\n"
-		h += "  -p  --public-events    Fetch on repositories made public (default: true)\n"
-		h += "  -c  --config [path]    Use configuration file (optional)\n"
+		h += "  -c  --config [path]    Use configuration file. Required for ElasticSearch (default: config.yaml)\n"
 		h += "  -d  --debug            Enable debug messages to stderr (default:false)\n"
 		h += "  -h  --help             This message\n"
 		h += "\n\n"
@@ -60,16 +63,91 @@ func init() {
 }
 
 func main() {
+	/*
+		c := commit.CommitEvent{
+			RepoName: "commit-stream",
+			UserName: "x1sec",
+		}
+		c.AuthorEmail.Domain = "test.com"
+		c.AuthorEmail.User = "tester1"
+		c.AuthorName = "tester"
+		db := database.Sqlite{
+			SqLiteDB: "test.db",
+		}
+		dh := &handlers.DatabaseHandler{
+			Db: &db,
+		}
+		cc := []commit.CommitEvent{c}
+		err := db.Connect()
+		if err != nil {
+			log.Fatal(err)
+		}
+		dh.Callback(cc)
+		os.Exit(0)
+	*/
+	/*c := commit.CommitEvent{
+		Repo: "commit-stream",
+		Org:  "x1sec",
+	}
+	c.Email.Domain = "test.com"
+	c.Email.User = "tester1"
+	db := database.NewDB("127.0.0.1", "rob", "", 5432, "rob")
+	err := db.Insert(c)
+	if err != nil {
+		fmt.Println(err)
+	}
+	db.Test()
+	os.Exit(0)
+	*/
+	/*
+		c := commitstream.Commit{
+			Repo: "x1sec/commit-stream",
+		}
+		c.Email.Domain = "test.com"
+		c.Name = "tester"
+		t := commitstream.TruffleHandler{
+			Path: "./script/trufflehog",
+			Slack: commitstream.SlackHandler{
+				Token:     "xoxb-4120608800160-4095105932069-c3dPejzd1qOYTQQwa4o6Pgjv",
+				ChannelID: "test",
+			},
+		}
+		t.Run(1, c)
+		return
+	*/
+	/*
+		h := commitstream.SlackHandler{
+			Token:     "xoxb-4120608800160-4095105932069-c3dPejzd1qOYTQQwa4o6Pgjv",
+			ChannelID: "test",
+		}
+		h.PostMessage(c)
+	*/
+	/*h := commitstream.ScriptHandler{
+		Path:    "./script/run.sh",
+		LogFile: "./script/log.txt",
+	}
 
-	var handler commitstream.Handler
-	var flags FlagOptions
-	PopulateOptions(&flags)
+	h.Run(1, c)
+	return
+	*/
+	var handler handlers.Handler
+	var flags conf.FlagOptions
+	conf.PopulateOptions(&flags)
 
 	var authToken string
-	config := commitstream.Config{FilePath: flags.ConfigFile}
+	config := conf.Config{FilePath: flags.ConfigFile}
 	if err := config.Load(); err != nil {
 		log.Printf(err.Error())
 	}
+
+	var level log.Level
+	if config.Settings.LogLevel == "debug" {
+		log.Println("log level debug")
+		level = log.DebugLevel
+	} else {
+		level = log.InfoLevel
+	}
+	log.SetLevel(level)
 
 	if flags.AuthToken == "" {
 		if config.Settings.Github.Token == "" {
@@ -82,44 +160,98 @@ func main() {
 		authToken = flags.AuthToken
 	}
 	if authToken == "" {
-		log.Fatal("No Github token specified. Use '-t', or set environment variable CSTREAM_TOKEN or specify in config.yaml. -h for help.\n")
+		log.Fatal("No Github token specified. Use '-t', environment variable CSTREAM_TOKEN or specifying in config.yaml\n")
 	}
 
-	//util := commitstream.GithubUtil{
-	//	Token: authToken,
-	//}
-	//util.GetLastCommitAuthor("x1sec", "gh-user-recon")
-	//os.Exit(0)
 	if config.Settings.Destination == "elastic" {
 		settings := config.Settings.Elasticsearch
 
 		log.Printf("Using ElasticSearch database: %s\n", settings.Uri)
-		handler = commitstream.ElasticHandler{
+		handler = handlers.ElasticHandler{
 			RemoteURI:    settings.Uri,
 			Username:     settings.Username,
 			Password:     settings.Password,
 			NoDuplicates: settings.NoDuplicates,
 			UseZincAwsS3: settings.UseZincAwsS3,
 		}
-		h := handler.(commitstream.ElasticHandler)
+		h := handler.(handlers.ElasticHandler)
 		h.Setup()
 
+	} else if config.Settings.Destination == "script" {
+		log.Println("Using script handler: " + config.Settings.Script.Path)
+
+		handler = handlers.ScriptHandler{
+			Path:       config.Settings.Script.Path,
+			MaxWorkers: config.Settings.Script.MaxWorkers,
+			LogFile:    config.Settings.Script.LogFile,
+		}
+	} else if config.Settings.Destination == "truffle-slack" {
+		log.Println("Running trufflehog on commits and sending to slack")
+		token := config.Settings.Slack.Token
+		channelID := config.Settings.Slack.ChannelID
+		slack := handlers.NewSlack(token, channelID)
+		h := handlers.TruffleHandler{
+			Slack:       slack,
+			Path:        config.Settings.Truffle.Path,
+			MaxWorkers:  config.Settings.Truffle.MaxWorkers,
+			GithubToken: config.Settings.Truffle.GitHubToken,
+		}
+		h.StartWorkers()
+		handler = &h
+	} else if config.Settings.Destination == "slack" {
+		log.Println("Using slack handler")
+		if flags.Filter.Email == "" && flags.Filter.Name == "" {
+			log.Fatal("No filter options specified. Refusing to use slack handler!")
+		}
+		token := config.Settings.Slack.Token
+		channelID := config.Settings.Slack.ChannelID
+		handler = handlers.NewSlack(token, channelID)
+
+	} else if config.Settings.Destination == "database" {
+		log.Println("Using database handler")
+		var databaseHandler handlers.DatabaseHandler
+		var db database.Database
+		engine := config.Settings.Database.Engine
+		log.Println("\t.. engine: " + engine)
+		if engine == "sqlite" {
+			path := config.Settings.Database.Path
+			db = &database.Sqlite{
+				SqLiteDB: path,
+			}
+
+		} else if engine == "postgres" {
+			dsn := config.Settings.Database.Dsn
+			db = &database.Postgres{
+				Dsn: dsn,
+			}
+		} else if engine == "mysql" {
+			dsn := config.Settings.Database.Dsn
+			db = &database.Mysql{
+				Dsn: dsn,
+			}
+		} else {
+			log.Fatal("Unknown database engine. Exiting.")
+		}
+		databaseHandler = handlers.DatabaseHandler{
+			Db: db,
+		}
+		err := db.Connect()
+		if err != nil {
+			log.Fatal(err)
+		}
+		handler = &databaseHandler
 	} else {
-		handler = commitstream.CsvHander{}
+		handler = handlers.CsvHander{}
 	}
 
-	githubOptions := commitstream.GithubOptions{
+	githubOptions := github.GithubOptions{
 		AuthToken: authToken,
 	}
 
-	ghUtil := commitstream.GithubUtil{
-		Token: authToken,
-	}
-	cs := commitstream.CommitStream{
+	cs := stream.CommitEventStream{
 		GithubOptions: &githubOptions,
 		Filter:        &flags.Filter,
 		Debug:         flags.Debug,
-		GhUtil:        ghUtil,
 	}
 
 	cs.Start(handler)

@@ -1,0 +1,52 @@
+# destination handler.
+# options: stdout, slack, elasticsearch, truffle, truffle-slack, database
+destination: database 
+
+github:
+  token:
+
+log-level: debug 
+
+# Database handler
+database:
+  # type is either: sqlite, mysql, postgres
+  engine: postgres 
+  
+  # dsn required for mysql or postgres
+  dsn: host=localhost user=postgres dbname=commits port=5432
+  
+  # path only required for sqlite
+  path: ./test.db
+
+
+# ElasticSearch handler
+elasticsearch:
+  uri: http://127.0.0.1:4080
+
+  # optional
+  username:
+  password:
+  
+  no-duplicates: true
+
+# Shell script handler
+script:
+  path: ./script/run.sh
+  log-file: ./script/script.log
+  max-workers: 10
+
+# Slack handler
+slack:
+  token: xoxb-
+  channel-id: commitstream
+
+truffle:
+  path: ./script/trufflehog
+  max-workers: 5
+
+  # it is recommended to use a different github token to the commit-stream token
+  github-token: ghp_ 
+
+  # signatures to ignore
+  ignore:
+    - Parseur

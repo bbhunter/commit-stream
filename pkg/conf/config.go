@@ -1,4 +1,4 @@
-package commitstream
+package conf
 
 import (
 	"errors"
@@ -17,6 +17,7 @@ type Config struct {
 
 type YamlConfig struct {
 	Destination   string
+	LogLevel      string `bool:"log-level"`
 	Elasticsearch struct {
 		Uri          string
 		Username     string
@@ -31,7 +32,26 @@ type YamlConfig struct {
 
 	Script struct {
 		Path       string
-		MaxWorkers int `yaml:"max-workers"`
+		MaxWorkers int    `yaml:"max-workers"`
+		LogFile    string `yaml:"log-file"`
+	}
+
+	Slack struct {
+		Token     string
+		ChannelID string `yaml:"channel-id"`
+	}
+
+	Truffle struct {
+		Path        string
+		MaxWorkers  int    `yaml:"max-workers"`
+		LogFile     string `yaml:"log-file"`
+		GitHubToken string `yaml:"github-token"`
+		Ignore      []string
+	}
+	Database struct {
+		Engine string
+		Dsn    string
+		Path   string
 	}
 }
 
@@ -52,8 +72,7 @@ func (c *Config) Load() error {
 	}
 	f, err := os.Open(c.FilePath)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil
-		//return errors.New("Unable to load config file: " + c.FilePath + ", using runtime settings.")
+		return errors.New("Unable to load config file: " + c.FilePath + ", using runtime settings.")
 	}
 	if err != nil {
 		return err

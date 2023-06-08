@@ -1,4 +1,4 @@
-package commitstream
+package github
 
 import (
 	"context"
@@ -11,16 +11,23 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	ggithub "github.com/google/go-github/github"
+	"github.com/x1sec/commit-stream/pkg/commit"
+	"github.com/x1sec/commit-stream/pkg/stats"
 	"golang.org/x/oauth2"
 )
 
+type GithubOptions struct {
+	AuthToken string
+	Rate      int
+}
 type GithubHandler struct {
 	session Session
-	Cstream *CommitStream
+	Options *GithubOptions
 }
 
 type Session struct {
-	client *github.Client
+	client *ggithub.Client
 	ctx    context.Context
 }
 
@@ -32,12 +39,12 @@ type FeedResult struct {
 }
 
 func (gh *GithubHandler) checkResponseError(err error, resp *github.Response) bool {
-	if _, ok := err.(*github.RateLimitError); ok {
+	if _, ok := err.(*ggithub.RateLimitError); ok {
 		log.Println("Hit rate limit. Reset: %s\n", resp.Rate.Reset)
 		time.Sleep(time.Until(resp.Rate.Reset.Time))
 		return true
 	}
-	if _, ok := err.(*github.AbuseRateLimitError); ok {
+	if _, ok := err.(*ggithub.AbuseRateLimitError); ok {
 		fmt.Fprintf(os.Stderr, "Abuse detected!\n")
 		os.Exit(1)
 	}
@@ -48,7 +55,7 @@ func (gh *GithubHandler) checkResponseError(err error, resp *github.Response) bo
 		return true
 	}
 
-	if err, r := err.(*github.ErrorResponse); r {
+	if err, r := err.(*ggithub.ErrorResponse); r {
 		switch statusCode := err.Response.StatusCode; statusCode {
 		case 401:
 			fmt.Fprintf(os.Stderr, "401 - Error with authentication token provided.\n")
@@ -69,8 +76,8 @@ func (gh *GithubHandler) checkResponseError(err error, resp *github.Response) bo
 	return false
 }
 
-func (gh *GithubHandler) Run(results chan<- []Commit) {
-	options := gh.Cstream.GithubOptions
+func (gh *GithubHandler) Run(results chan<- []commit.CommitEvent, stats *stats.ProcessingStats, searchAllCommits bool) {
+	options := gh.Options
 
 	gh.session.ctx = context.Background()
 	lc, cancel := context.WithCancel(gh.session.ctx)
@@ -81,9 +88,9 @@ func (gh *GithubHandler) Run(results chan<- []Commit) {
 	)
 	tc := oauth2.NewClient(gh.session.ctx, ts)
 
-	gh.session.client = github.NewClient(tc)
+	gh.session.client = ggithub.NewClient(tc)
 	for {
-		opt := &github.ListOptions{PerPage: 300}
+		opt := &ggithub.ListOptions{PerPage: 300}
 		for {
 
 			events, resp, err := gh.session.client.Activity.ListEvents(lc, opt)
@@ -92,48 +99,40 @@ func (gh *GithubHandler) Run(results chan<- []Commit) {
 				continue
 			}
 
-			var commits []Commit
+			var commits []commit.CommitEvent
 			for _, e := range events {
-				if *e.Type == "PublicEvent" {
-					repo := strings.Split(*e.Repo.Name, "/")[1]
-					userName := *e.Actor.Login
-					pCommit, err := gh.Cstream.GhUtil.GetLastCommitAuthor(userName, repo)
-					if err != nil {
-						continue
-					}
-					pCommit.Repo = *e.Repo.Name
-					pCommit.Name = userName
-					commits = append(commits, pCommit)
-					//fmt.Printf("%s: %s, %s, %s", userName, repo, authorName, email)
 
-				}
 				if *e.Type == "PushEvent" {
+
 					p, _ := e.ParsePayload()
 
-					q := p.(*github.PushEvent)
+					q := p.(*ggithub.PushEvent)
 
 					for _, r := range q.Commits {
-						var commit Commit
-						commit.EventType = "push"
-						commit.Repo = *e.GetRepo().Name
-						//commit.Email = *r.GetAuthor().Email
+						var commit commit.CommitEvent
+						commit.Timestamp = time.Now()
+						userRepo := *e.GetRepo().Name
+						_userRepo := strings.Split(userRepo, "/")
+						commit.UserName = _userRepo[0]
+						commit.RepoName = _userRepo[1]
+						commit.SHA = *r.SHA
 						commit.Message = *r.Message
-						commit.Name = *r.GetAuthor().Name
+						commit.AuthorName = *r.GetAuthor().Name
 
 						email := *r.GetAuthor().Email
+
 						if strings.Contains(email, "@") {
 							parts := strings.Split(email, "@")
-							commit.Email.User = parts[0]
-							commit.Email.Domain = parts[1]
+							commit.AuthorEmail.User = parts[0]
+							commit.AuthorEmail.Domain = parts[1]
 						} else {
-							commit.Email.User = email
+							commit.AuthorEmail.User = email
 						}
-						//commit.SHA = *r.SHA
 
-						atomic.AddUint32(&gh.Cstream.Stats.IncomingRate, 1)
+						atomic.AddUint32(&stats.IncomingRate, 1)
 
 						commits = append(commits, commit)
-						if gh.Cstream.Filter.SearchAllCommits == false {
+						if searchAllCommits == false {
 							break
 						}
 					}

@@ -1,14 +1,14 @@
-package main
+package conf
 
 import (
 	"flag"
 
-	commitstream "github.com/x1sec/commit-stream/pkg"
+	"github.com/x1sec/commit-stream/pkg/filter"
 )
 
 type FlagOptions struct {
 	AuthToken  string
-	Filter     commitstream.Filter
+	Filter     filter.Filter
 	ConfigFile string
 	Debug      bool
 }
@@ -26,8 +26,8 @@ func PopulateOptions(f *FlagOptions) {
 	flag.BoolVar(&f.Filter.IgnorePrivateEmails, "ignore-priv", false, "")
 	flag.BoolVar(&f.Filter.IgnorePrivateEmails, "i", false, "")
 
-	flag.BoolVar(&f.Filter.SearchAllCommits, "a", false, "")
-	flag.BoolVar(&f.Filter.SearchAllCommits, "all-commits", false, "")
+	flag.BoolVar(&f.Filter.SearchAllCommitEvents, "a", false, "")
+	flag.BoolVar(&f.Filter.SearchAllCommitEvents, "all-commits", false, "")
 	flag.BoolVar(&f.Filter.IncludeMessages, "m", false, "")
 	flag.BoolVar(&f.Filter.IncludeMessages, "messages", false, "")
 	flag.StringVar(&f.ConfigFile, "config", "", "")
@@ -36,9 +36,6 @@ func PopulateOptions(f *FlagOptions) {
 	flag.BoolVar(&f.Debug, "d", false, "")
 	flag.StringVar(&f.Filter.DomainsFile, "dom-file", "", "")
 	flag.StringVar(&f.Filter.DomainsFile, "df", "", "")
-
-	flag.BoolVar(&f.Filter.PublicEvent, "public-event", true, "")
-	flag.BoolVar(&f.Filter.PublicEvent, "p", true, "")
 
 	flag.Parse()
 }

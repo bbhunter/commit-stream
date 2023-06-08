@@ -1,10 +1,11 @@
-package commitstream
+package github
 
 import (
 	"context"
 	"strings"
 
 	"github.com/google/go-github/github"
+	"github.com/x1sec/commit-stream/pkg/commit"
 	"golang.org/x/oauth2"
 )
 
@@ -44,16 +45,16 @@ func (g *GithubUtil) GetEmailsByRepo(user string, repo string) (emails []string,
 	return emails, nil
 }
 
-func (g *GithubUtil) GetLastCommitAuthor(user string, repo string) (commit Commit, err error) {
+func (g *GithubUtil) GetLastCommitAuthor(user string, repo string) (commit commit.CommitEvent, err error) {
 	if g.session.client == nil {
 		g.newSession()
 	}
 	commits, response, err := g.session.client.Repositories.ListCommits(context.Background(), user, repo, nil)
 	if err != nil && response.StatusCode != 200 {
-		return Commit{}, err
+		return commit, err
 	}
 	if len(commits) == 0 {
-		return Commit{}, nil
+		return commit, nil
 	}
 	lastCommit := commits[0]
 	email := *lastCommit.Commit.Author.Email
@@ -61,12 +62,12 @@ func (g *GithubUtil) GetLastCommitAuthor(user string, repo string) (commit Commi
 	message := *lastCommit.Commit.Message
 	if strings.Contains(email, "@") {
 		parts := strings.Split(email, "@")
-		commit.Email.User = parts[0]
-		commit.Email.Domain = parts[1]
+		commit.AuthorEmail.User = parts[0]
+		commit.AuthorEmail.Domain = parts[1]
 	} else {
-		commit.Email.User = email
+		commit.AuthorEmail.User = email
 	}
-	commit.Name = name
+	commit.UserName = name
 	commit.Message = message
 	return commit, nil
 }
