@@ -10,13 +10,12 @@ OSINT / Blueteam / Recon uses for Redteamers / Bug bounty hunters:
 
 * Uncover repositories which employees of a target company is commiting code (filter by email domain)
 * Identify repositories belonging to an individual (filter by author name)
-* Chain with other tools such as trufflehog to extract secrets in uncovered repositories.
-* Alerts to Slack, Elastic Search and others
+* Integration to Trufflehog with alert reporting via Slack channels
+* Supports logging to Postgres, MySql, Sqlite and Elastic Search databases
 
 Companies have found the tool useful to discover repositories that their employees are committing intellectual property to.
 
 [![asciicast](https://asciinema.org/a/317469.svg)](https://asciinema.org/a/317469)
-
 ## Installation
 ### Binaries
 Compiled 64-bit executable files for Windows, Mac and Linux are available [here](https://github.com/x1sec/commit-stream/releases/)
@@ -119,8 +118,8 @@ The appropriate configuration for the destination handler is required.
 
 ### SQL Database
 `database` handler writes events to a database with the database type specified by the `engine` parameter.
-`dsn` must be specified for `postgres` and `mysql`
-`path` must be specified for `sqlite` 
+- `dsn` must be specified for `postgres` and `mysql`
+- `path` must be specified for `sqlite` 
 ```yaml
 database:
   # type is either: sqlite, mysql, postgres
