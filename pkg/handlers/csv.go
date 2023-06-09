@@ -21,7 +21,7 @@ func (h CsvHander) Callback(commits []commit.CommitEvent) {
 	w := csv.NewWriter(os.Stdout)
 	for _, c := range commits {
 		email := c.AuthorEmail.User + "@" + c.AuthorEmail.Domain
-		cOut := []string{c.UserName, email, "https://github.com/" + c.RepoName, c.Message, c.Timestamp.String()}
+		cOut := []string{c.UserName, email, "https://github.com/" + c.RepoName, c.Message}
 
 		w.Write(cOut)
 	}
