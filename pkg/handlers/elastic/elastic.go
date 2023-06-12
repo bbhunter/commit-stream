@@ -1,4 +1,4 @@
-package handlers
+package elastic
 
 import (
 	"crypto/md5"
@@ -18,6 +18,18 @@ type ElasticHandler struct {
 	Password     string
 	NoDuplicates bool
 	UseZincAwsS3 bool
+}
+
+func NewElasticHandler(uri string, username string, password string, noDuplicates bool) *ElasticHandler {
+	log.Println("Using elastic handler")
+	h := &ElasticHandler{
+		RemoteURI:    uri,
+		Username:     username,
+		Password:     password,
+		NoDuplicates: noDuplicates,
+	}
+	h.Setup()
+	return h
 }
 
 func (e ElasticHandler) Callback(commits []commit.CommitEvent) {

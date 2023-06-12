@@ -1,13 +1,17 @@
-package handlers
+package csv
 
 import (
 	"encoding/csv"
-	"os"
+	"io"
+
+	"log"
 
 	"github.com/x1sec/commit-stream/pkg/commit"
 )
 
-type CsvHander struct{}
+type CsvHander struct {
+	out io.Writer
+}
 
 type NoHandler struct{}
 
@@ -17,11 +21,16 @@ func (n NoHandler) Callback(commits []commit.CommitEvent) {
 	return
 }
 
+func NewCsvHandler(out io.Writer) CsvHander {
+	log.Println("Using CSV handler")
+	return CsvHander{out: out}
+}
+
 func (h CsvHander) Callback(commits []commit.CommitEvent) {
-	w := csv.NewWriter(os.Stdout)
+	w := csv.NewWriter(h.out)
 	for _, c := range commits {
 		email := c.AuthorEmail.User + "@" + c.AuthorEmail.Domain
-		cOut := []string{c.UserName, email, "https://github.com/" + c.RepoName, c.Message}
+		cOut := []string{c.AuthorName, email, "https://github.com/" + c.UserName + "/" + c.RepoName, c.Message}
 
 		w.Write(cOut)
 	}

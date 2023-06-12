@@ -1,4 +1,4 @@
-package handlers
+package script
 
 import (
 	"errors"
@@ -18,6 +18,14 @@ type ScriptHandler struct {
 	MaxWorkers     int
 	DroppedCommits uint64
 	LogFile        string
+}
+
+func NewScriptHandler(path string, maxWorkers int, logFile string) *ScriptHandler {
+	return &ScriptHandler{
+		Path:       path,
+		MaxWorkers: maxWorkers,
+		LogFile:    logFile,
+	}
 }
 
 func (h ScriptHandler) Run(worker int, commit commit.CommitEvent) {

@@ -2,4 +2,3 @@ commit-stream
 go.mod.tidy
 releases/
 config.yaml
-script/

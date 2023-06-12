@@ -1,9 +1,8 @@
-package handlers
+package slack
 
 import (
 	//b64 "encoding/base64"
 	"log"
-	"strconv"
 
 	"github.com/slack-go/slack"
 	"github.com/x1sec/commit-stream/pkg/commit"
@@ -14,7 +13,8 @@ type SlackHandler struct {
 	ChannelID string
 }
 
-func NewSlack(token string, channelID string) *SlackHandler {
+func NewSlackHandler(token string, channelID string) *SlackHandler {
+	log.Println("Using slack handler")
 	new := SlackHandler{
 		Token:     token,
 		ChannelID: channelID,
@@ -29,7 +29,7 @@ func (s SlackHandler) Callback(commits []commit.CommitEvent) {
 }
 
 func (s SlackHandler) PostMessage(commit commit.CommitEvent) {
-	client := slack.New(s.Token, slack.OptionDebug(true))
+	client := slack.New(s.Token, slack.OptionDebug(false))
 	attachment := slack.Attachment{
 		Pretext:    "commit-stream: incoming commit",
 		Color:      "#36a64f",
@@ -49,17 +49,18 @@ func (s SlackHandler) PostMessage(commit commit.CommitEvent) {
 			},
 		},
 	}
-	_, timestamp, err := client.PostMessage(
+	_, _, err := client.PostMessage(
 		s.ChannelID,
 		slack.MsgOptionAttachments(attachment),
 	)
 
 	if err != nil {
-		log.Println(err)
+		log.Fatal("Failure with slack handler: " + err.Error())
 	}
-	log.Printf("Slack message sent at %s", timestamp)
 }
 
+//TODO
+/*
 func (s SlackHandler) PostTruffle(t Truffle) {
 
 	secret := t.Raw
@@ -100,3 +101,4 @@ func (s SlackHandler) PostTruffle(t Truffle) {
 	}
 	log.Printf("Slack message sent at %s", timestamp)
 }
+*/

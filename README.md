@@ -105,6 +105,7 @@ It is possible to search upto 20 previous commits for the filter keywords by spe
 ## Output handlers
 In `config.yaml`, the `destination` parameter is set to one of the following options:
 - stdout
+- database
 - elasticsearch
 - slack
 - script

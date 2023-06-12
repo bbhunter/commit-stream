@@ -15,7 +15,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/x1sec/commit-stream/pkg/conf"
-	"github.com/x1sec/commit-stream/pkg/database"
 	"github.com/x1sec/commit-stream/pkg/github"
 	"github.com/x1sec/commit-stream/pkg/handlers"
 	"github.com/x1sec/commit-stream/pkg/stream"
@@ -96,87 +95,6 @@ func main() {
 		log.Fatal("No Github token specified. Use '-t', environment variable CSTREAM_TOKEN or specifying in config.yaml\n")
 	}
 
-	if config.Settings.Destination == "elastic" {
-		settings := config.Settings.Elasticsearch
-
-		log.Printf("Using ElasticSearch database: %s\n", settings.Uri)
-		handler = handlers.ElasticHandler{
-			RemoteURI:    settings.Uri,
-			Username:     settings.Username,
-			Password:     settings.Password,
-			NoDuplicates: settings.NoDuplicates,
-			UseZincAwsS3: settings.UseZincAwsS3,
-		}
-		h := handler.(handlers.ElasticHandler)
-		h.Setup()
-
-	} else if config.Settings.Destination == "script" {
-		log.Println("Using script handler: " + config.Settings.Script.Path)
-
-		handler = handlers.ScriptHandler{
-			Path:       config.Settings.Script.Path,
-			MaxWorkers: config.Settings.Script.MaxWorkers,
-			LogFile:    config.Settings.Script.LogFile,
-		}
-	} else if config.Settings.Destination == "truffle-slack" {
-		log.Println("Running trufflehog on commits and sending to slack")
-		token := config.Settings.Slack.Token
-		channelID := config.Settings.Slack.ChannelID
-		slack := handlers.NewSlack(token, channelID)
-		h := handlers.TruffleHandler{
-			Slack:       slack,
-			Path:        config.Settings.Truffle.Path,
-			MaxWorkers:  config.Settings.Truffle.MaxWorkers,
-			GithubToken: config.Settings.Truffle.GitHubToken,
-		}
-		h.StartWorkers()
-		handler = &h
-	} else if config.Settings.Destination == "slack" {
-		log.Println("Using slack handler")
-		if flags.Filter.Email == "" && flags.Filter.Name == "" {
-			log.Fatal("No filter options specified. Refusing to use slack handler!")
-		}
-		token := config.Settings.Slack.Token
-		channelID := config.Settings.Slack.ChannelID
-		handler = handlers.NewSlack(token, channelID)
-
-	} else if config.Settings.Destination == "database" {
-		log.Println("Using database handler")
-		var databaseHandler handlers.DatabaseHandler
-		var db database.Database
-		engine := config.Settings.Database.Engine
-		log.Println("\t.. engine: " + engine)
-		if engine == "sqlite" {
-			path := config.Settings.Database.Path
-			db = &database.Sqlite{
-				SqLiteDB: path,
-			}
-
-		} else if engine == "postgres" {
-			dsn := config.Settings.Database.Dsn
-			db = &database.Postgres{
-				Dsn: dsn,
-			}
-		} else if engine == "mysql" {
-			dsn := config.Settings.Database.Dsn
-			db = &database.Mysql{
-				Dsn: dsn,
-			}
-		} else {
-			log.Fatal("Unknown database engine. Exiting.")
-		}
-		databaseHandler = handlers.DatabaseHandler{
-			Db: db,
-		}
-		err := db.Connect()
-		if err != nil {
-			log.Fatal(err)
-		}
-		handler = &databaseHandler
-	} else {
-		handler = handlers.CsvHander{}
-	}
-
 	githubOptions := github.GithubOptions{
 		AuthToken: authToken,
 	}
@@ -187,5 +105,6 @@ func main() {
 		Debug:         flags.Debug,
 	}
 
+	handler = newHandler(config)
 	cs.Start(handler)
 }

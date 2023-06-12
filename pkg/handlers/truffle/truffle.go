@@ -1,4 +1,4 @@
-package handlers
+package truffle
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/x1sec/commit-stream/pkg/commit"
+	slackhandler "github.com/x1sec/commit-stream/pkg/handlers/slack"
 )
 
 type Truffle struct {
@@ -46,7 +47,7 @@ type TruffleHandler struct {
 	MaxWorkers     int
 	DroppedCommits uint64
 	LogFile        string
-	Slack          *SlackHandler
+	Slack          *slackhandler.SlackHandler
 	GithubToken    string
 	lastList       map[string]time.Time
 	queue          chan commit.CommitEvent
@@ -113,7 +114,9 @@ func (h *TruffleHandler) Run(worker int, commit commit.CommitEvent) {
 				log.Println(err)
 			} else {
 				log.Println("Posting truffle to Slack: " + truffle.SourceMetadata.Data.Github.Repository)
-				h.Slack.PostTruffle(truffle)
+
+				//TODO
+				//h.Slack.PostTruffle(truffle)
 			}
 			//h.Slack.PostMessage(commit, string(body))
 
