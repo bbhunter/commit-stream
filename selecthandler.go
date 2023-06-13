@@ -31,11 +31,14 @@ func newHandler(config conf.Config) handlers.Handler {
 			s.Script.MaxWorkers,
 			s.Script.LogFile)
 	case "truffle-slack":
-		return truffle.NewTruffleSlackHander(s.Slack.Token,
-			s.Slack.ChannelID,
+		slackConf := slack.NewSlackHandler(s.Slack.Token, s.Slack.ChannelID)
+		ts := truffle.NewTruffleHandler(
 			s.Truffle.Path,
 			s.Truffle.MaxWorkers,
 			s.Truffle.GitHubToken)
+		ts.SlackConf = slackConf
+		log.Println("Truffle matches to slack")
+		return ts
 	case "slack":
 		return slack.NewSlackHandler(s.Slack.Token,
 			s.Slack.ChannelID)
@@ -50,7 +53,6 @@ func newHandler(config conf.Config) handlers.Handler {
 func selectDatabaseHandler(config conf.Config) database.Database {
 	var db database.Database
 	engine := config.Settings.Database.Engine
-	log.Println("\t.. engine: " + engine)
 	if engine == "sqlite" {
 		path := config.Settings.Database.Path
 		db = &database.Sqlite{
@@ -68,7 +70,7 @@ func selectDatabaseHandler(config conf.Config) database.Database {
 			Dsn: dsn,
 		}
 	} else {
-		log.Fatal("Unknown database engine. Exiting.")
+		log.Fatal("Unknown database engine: " + engine)
 	}
 	return db
 }

@@ -8,12 +8,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
 
+	"github.com/slack-go/slack"
 	"github.com/x1sec/commit-stream/pkg/commit"
-	slackhandler "github.com/x1sec/commit-stream/pkg/handlers/slack"
+	slackconf "github.com/x1sec/commit-stream/pkg/handlers/slack"
 )
 
 type Truffle struct {
@@ -47,10 +49,22 @@ type TruffleHandler struct {
 	MaxWorkers     int
 	DroppedCommits uint64
 	LogFile        string
-	Slack          *slackhandler.SlackHandler
 	GithubToken    string
 	lastList       map[string]time.Time
 	queue          chan commit.CommitEvent
+	SlackConf      slackconf.SlackHandler
+}
+
+func NewTruffleHandler(path string, maxWorkers int, githubToken string) *TruffleHandler {
+	log.Println("Using truffle handler")
+
+	ts := &TruffleHandler{
+		Path:        path,
+		MaxWorkers:  maxWorkers,
+		GithubToken: githubToken,
+	}
+	ts.StartWorkers()
+	return ts
 }
 
 func (h *TruffleHandler) parseJson(entry string) (Truffle, error) {
@@ -62,7 +76,6 @@ func (h *TruffleHandler) parseJson(entry string) (Truffle, error) {
 	return te, nil
 }
 func (h *TruffleHandler) Run(worker int, commit commit.CommitEvent) {
-
 	for repo, tm := range h.lastList {
 		if time.Now().After(tm) {
 			log.Printf("[%s] expired, removing", commit.RepoName)
@@ -106,6 +119,8 @@ func (h *TruffleHandler) Run(worker int, commit commit.CommitEvent) {
 		return
 	}
 	if len(body) > 1 {
+		// TODO: Normal output
+		log.Println(string(body))
 		lines := strings.Split(string(body), "\n")
 		log.Printf("Parsing %d truffles... ", len(lines))
 		for _, line := range lines {
@@ -114,12 +129,8 @@ func (h *TruffleHandler) Run(worker int, commit commit.CommitEvent) {
 				log.Println(err)
 			} else {
 				log.Println("Posting truffle to Slack: " + truffle.SourceMetadata.Data.Github.Repository)
-
-				//TODO
-				//h.Slack.PostTruffle(truffle)
+				h.SendSlack(truffle)
 			}
-			//h.Slack.PostMessage(commit, string(body))
-
 		}
 
 	}
@@ -163,4 +174,45 @@ func (h *TruffleHandler) Callback(commits []commit.CommitEvent) {
 
 	}
 	//close(queue)
+}
+
+func (s TruffleHandler) SendSlack(t Truffle) {
+
+	secret := t.Raw
+	if len(secret) > 30 {
+		secret = secret[0:30] + ".. <cut> .."
+	}
+	client := slack.New(s.SlackConf.Token, slack.OptionDebug(false))
+	attachment := slack.Attachment{
+		Pretext: "Commit-stream message",
+		Color:   "#36a64f",
+		Text:    t.DetectorName,
+		Fields: []slack.AttachmentField{
+			{
+				Title: "Repository",
+				Value: t.SourceMetadata.Data.Github.Email,
+			},
+			{
+				Title: "File",
+				Value: t.SourceMetadata.Data.Github.Link,
+			},
+			{
+				Title: "Line",
+				Value: strconv.Itoa(t.SourceMetadata.Data.Github.Line),
+			},
+			{
+				Title: "Secret",
+				Value: string(secret),
+			},
+		},
+	}
+	_, timestamp, err := client.PostMessage(
+		s.SlackConf.ChannelID,
+		slack.MsgOptionAttachments(attachment),
+	)
+
+	if err != nil {
+		log.Println(err)
+	}
+	log.Printf("Slack message sent at %s", timestamp)
 }

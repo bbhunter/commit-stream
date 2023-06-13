@@ -1,7 +1,6 @@
 package slack
 
 import (
-	//b64 "encoding/base64"
 	"log"
 
 	"github.com/slack-go/slack"
@@ -13,13 +12,13 @@ type SlackHandler struct {
 	ChannelID string
 }
 
-func NewSlackHandler(token string, channelID string) *SlackHandler {
+func NewSlackHandler(token string, channelID string) SlackHandler {
 	log.Println("Using slack handler")
 	new := SlackHandler{
 		Token:     token,
 		ChannelID: channelID,
 	}
-	return &new
+	return new
 }
 
 func (s SlackHandler) Callback(commits []commit.CommitEvent) {
@@ -29,7 +28,7 @@ func (s SlackHandler) Callback(commits []commit.CommitEvent) {
 }
 
 func (s SlackHandler) PostMessage(commit commit.CommitEvent) {
-	client := slack.New(s.Token, slack.OptionDebug(false))
+	client := slack.New(s.Token, slack.OptionDebug(true))
 	attachment := slack.Attachment{
 		Pretext:    "commit-stream: incoming commit",
 		Color:      "#36a64f",
@@ -58,47 +57,3 @@ func (s SlackHandler) PostMessage(commit commit.CommitEvent) {
 		log.Fatal("Failure with slack handler: " + err.Error())
 	}
 }
-
-//TODO
-/*
-func (s SlackHandler) PostTruffle(t Truffle) {
-
-	secret := t.Raw
-	if len(secret) > 30 {
-		secret = secret[0:30] + ".. <cut> .."
-	}
-	client := slack.New(s.Token, slack.OptionDebug(false))
-	attachment := slack.Attachment{
-		Pretext: "Commit-stream message",
-		Color:   "#36a64f",
-		Text:    t.DetectorName,
-		Fields: []slack.AttachmentField{
-			{
-				Title: "Repository",
-				Value: t.SourceMetadata.Data.Github.Email,
-			},
-			{
-				Title: "File",
-				Value: t.SourceMetadata.Data.Github.Link,
-			},
-			{
-				Title: "Line",
-				Value: strconv.Itoa(t.SourceMetadata.Data.Github.Line),
-			},
-			{
-				Title: "Secret",
-				Value: string(secret),
-			},
-		},
-	}
-	_, timestamp, err := client.PostMessage(
-		s.ChannelID,
-		slack.MsgOptionAttachments(attachment),
-	)
-
-	if err != nil {
-		log.Println(err)
-	}
-	log.Printf("Slack message sent at %s", timestamp)
-}
-*/
